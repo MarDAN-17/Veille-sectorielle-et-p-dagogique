@@ -342,24 +342,19 @@ async function loadAllFeeds(){
 
   const total=RSS_FEEDS.length;
 
-  // Charger par batch de 5 pour ne pas saturer
-  const batchSize=5;
-  for(let i=0;i<RSS_FEEDS.length;i+=batchSize){
-    const batch=RSS_FEEDS.slice(i,i+batchSize);
-    const results=await Promise.allSettled(batch.map(f=>loadOneFeed(f)));
-    results.forEach(r=>{
-      if(r.status==='fulfilled') allItems.push(...r.value);
-    });
-    loadedCount=Math.min(i+batchSize,total);
+  // Chargement séquentiel — un flux à la fois comme V18
+  for(let i=0;i<RSS_FEEDS.length;i++){
+    const items=await loadOneFeed(RSS_FEEDS[i]);
+    allItems.push(...items);
+    loadedCount=i+1;
     const pct=Math.round(loadedCount/total*100);
     progFill.style.width=pct+'%';
-    progLabel.textContent=`Chargement… ${loadedCount}/${total} sources`;
-    // Affichage progressif
-    renderFlux(currentFilter);
+    progLabel.textContent=`Chargement… ${loadedCount}/${total} sources (${RSS_FEEDS[i].name})`;
+    // Affichage progressif dès les premiers articles
+    if(allItems.length>0) renderFlux(currentFilter);
   }
 
   prog.style.display='none';
-  // Tri final par date
   allItems.sort((a,b)=>b.date>a.date?1:-1);
   updateCounts();
   renderFlux(currentFilter);
