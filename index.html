@@ -113,8 +113,8 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
   <button class="nav-btn" onclick="show('fil',this)"><i class="ti ti-bookmark"></i> Mes articles <span class="badge" id="nb-badge">0</span></button>
   <button class="nav-btn" onclick="show('ajouter',this)"><i class="ti ti-plus"></i> Ajouter</button>
   <span class="nav-sep"></span>
-  <button class="nav-btn" onclick="show('sources',this)"><i class="ti ti-books"></i> Sources <span class="badge">43</span></button>
-  <button class="nav-btn" onclick="show('linkedin',this)"><i class="ti ti-brand-linkedin"></i> LinkedIn <span class="badge">17</span></button>
+  <button class="nav-btn" onclick="show('sources',this)"><i class="ti ti-books"></i> Sources <span class="badge" id="nb-sources">43</span></button>
+  <button class="nav-btn" onclick="show('linkedin',this)"><i class="ti ti-brand-linkedin"></i> LinkedIn <span class="badge" id="nb-linkedin">17</span></button>
   <span class="nav-sep"></span>
   <button class="nav-btn" onclick="show('export',this)"><i class="ti ti-file-export"></i> Export Qualiopi</button>
 </nav>
@@ -125,7 +125,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
     <div class="stat"><div class="stat-label">Articles sauvegardés</div><div class="stat-val" id="st-total">0</div></div>
     <div class="stat"><div class="stat-label"><span class="dot dot-h"></span>Urgence haute</div><div class="stat-val" id="st-h">0</div></div>
     <div class="stat"><div class="stat-label"><span class="dot dot-m"></span>Urgence moyenne</div><div class="stat-val" id="st-m">0</div></div>
-    <div class="stat"><div class="stat-label"><i class="ti ti-rss"></i> Flux RSS actifs</div><div class="stat-val">39</div></div>
+    <div class="stat"><div class="stat-label"><i class="ti ti-rss"></i> Flux RSS actifs</div><div class="stat-val" id="st-rss-count">39</div></div>
   </div>
   <div class="card">
     <div style="font-size:14px;font-weight:500;margin-bottom:1rem">Répartition par périmètre</div>
@@ -141,7 +141,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 <!-- FLUX -->
 <div id="flux" class="section">
   <div class="section-title">Flux automatiques</div>
-  <div class="notice"><i class="ti ti-sparkles"></i><span>Articles chargés en direct depuis vos 39 flux RSS. Cliquez <strong>Sauvegarder</strong> pour archiver un article dans votre fil de veille.</span></div>
+  <div class="notice"><i class="ti ti-sparkles"></i><span>Articles chargés en direct depuis vos <span id="flux-rss-count">39</span> flux RSS. Cliquez <strong>Sauvegarder</strong> pour archiver un article dans votre fil de veille.</span></div>
   <div id="flux-progress" style="display:none">
     <div style="font-size:12px;color:var(--text2);margin-bottom:6px" id="flux-progress-label">Chargement…</div>
     <div class="progress-bar"><div class="progress-fill" id="flux-progress-fill" style="width:0%"></div></div>
@@ -200,8 +200,8 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 
 <!-- SOURCES -->
 <div id="sources" class="section">
-  <div class="section-title">Sources — 43 références · 39 flux RSS</div>
-  <div class="notice"><i class="ti ti-info-circle"></i><span><span style="color:var(--success-text)">● RSS</span> = flux intégré au portail · Priorité : 🔴 Prioritaire · 🟡 Élevée · ⚪ Moyenne</span></div>
+  <div class="section-title">Sources — <span id="src-total-count">43</span> références · <span id="src-rss-count">39</span> flux RSS auto-agrégés</div>
+  <div class="notice"><i class="ti ti-info-circle"></i><span><span style="color:var(--success-text)">● RSS auto</span> = flux intégré et chargé automatiquement dans l'onglet « Flux automatiques » · <span style="color:var(--text3)">👁 Suivi manuel</span> = pas de flux RSS disponible, à consulter directement via le lien « Ouvrir » (LinkedIn, sites institutionnels sans flux) · Priorité : 🔴 Prioritaire · 🟡 Élevée · ⚪ Moyenne</span></div>
   <div class="card" style="margin-bottom:.75rem"><div style="font-weight:500;font-size:13px;margin-bottom:10px"><span class="pill pill-v">Secteur vétérinaire / ASV</span></div><div id="src-vet"></div></div>
   <div class="card" style="margin-bottom:.75rem"><div style="font-weight:500;font-size:13px;margin-bottom:10px"><span class="pill pill-r">Réglementation / Qualiopi</span></div><div id="src-reg"></div></div>
   <div class="card"><div style="font-weight:500;font-size:13px;margin-bottom:10px"><span class="pill pill-i">Innovation pédagogique & IA</span></div><div id="src-ia"></div></div>
@@ -209,8 +209,8 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 
 <!-- LINKEDIN -->
 <div id="linkedin" class="section">
-  <div class="section-title">LinkedIn — 17 contacts & communautés</div>
-  <div class="notice"><i class="ti ti-brand-linkedin"></i><span>Suivez ces pages et activez la 🔔 sur les 6 prioritaires.</span></div>
+  <div class="section-title">LinkedIn — <span id="li-total-count">17</span> contacts & communautés <span style="font-size:11px;color:var(--text3);font-weight:400">(suivi 100% manuel — non agrégé)</span></div>
+  <div class="notice"><i class="ti ti-brand-linkedin"></i><span>Suivez ces pages et activez la 🔔 sur les <span id="li-prio-count">7</span> prioritaires.</span></div>
   <div class="filters">
     <select id="li-peri" onchange="renderLI()"><option value="">Tous périmètres</option><option>Secteur vétérinaire / ASV</option><option>Réglementation / Qualiopi</option><option>Innovation pédagogique & IA</option></select>
     <select id="li-prio" onchange="renderLI()"><option value="">Toute priorité</option><option>Prioritaire</option><option>Élevée</option><option>Moyenne</option></select>
@@ -278,6 +278,7 @@ const RSS_FEEDS=[
   {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCr5YOGCItfr20O_a5Zh8O_Q",name:"YouTube IA Péda 1",peri:"ia"},
   {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCrDwWp7EBBv4NwvScIpBDOA",name:"YouTube IA Péda 2",peri:"ia"},
   {url:"https://www.audible.fr/blog/rss.xml",name:"Audible Blog",peri:"ia"},
+  {url:"https://www.lafabriqueaneurones.com/rss.xml",name:"La Fabrique à Neurones",peri:"ia"},
 ];
 
 const PERI_LABEL={vet:"Secteur vétérinaire / ASV",reg:"Réglementation / Qualiopi",ia:"Innovation pédagogique & IA"};
@@ -549,6 +550,8 @@ const SOURCES_VET=[
   {g:"Interprofessionnel",name:"PortailEduc",url:"https://portaileduc.net/website",desc:"Portail pédagogique santé animale",prio:"Moyenne",rss:true},
   {g:"Institutionnel",name:"Ministère de l'Agriculture",url:"https://agriculture.gouv.fr",desc:"Publications, presse, réglementation",prio:"Élevée",rss:true},
   {g:"OPCO",name:"OPCO EP",url:"https://www.opcoep.fr",desc:"Financement formation vétérinaire",prio:"Élevée",rss:false},
+  {g:"Sites de référence",name:"La Dépêche Vétérinaire",url:"https://www.depecheveterinaire.com",desc:"Actualités vétérinaires — suivi manuel",prio:"Prioritaire",rss:false},
+  {g:"Interprofessionnel",name:"SNVEL — Vétérinaires libéraux",url:"https://www.veterinaireliberal.fr",desc:"Organisation des vétérinaires libéraux — suivi manuel",prio:"Élevée",rss:false},
 ];
 const SOURCES_REG=[
   {g:"Textes officiels",name:"France Compétences",url:"https://www.francecompetences.fr",desc:"RNCP, certifications, Qualiopi",prio:"Prioritaire",rss:true},
@@ -573,14 +576,18 @@ const SOURCES_IA=[
   {g:"Outils IA",name:"Towards Data Science",url:"https://towardsdatascience.com",desc:"IA, LLM, no-code",prio:"Moyenne",rss:true},
   {g:"Outils IA",name:"Articulate Blog",url:"https://articulate.com/blog",desc:"Storyline, Rise, IA conception",prio:"Élevée",rss:false},
   {g:"Outils IA",name:"IA Pédagogique",url:"https://www.iapedagogique.fr",desc:"IA appliquée à la formation",prio:"Élevée",rss:false},
+  {g:"Outils IA",name:"AXEM IA",url:"https://www.axem-ia.fr",desc:"Rendre l'IA simple, rentable et actionnable — suivi manuel",prio:"Élevée",rss:false},
+  {g:"Outils IA",name:"AppyLearny",url:"https://www.appylearny.fr/fr",desc:"Application mobile learning — suivi manuel",prio:"Moyenne",rss:false},
+  {g:"Blogs & magazines",name:"La Fabrique à Neurones",url:"https://www.lafabriqueaneurones.com",desc:"Neurosciences & pédagogie",prio:"Élevée",rss:true},
+  {g:"Podcasts",name:"Rendez-vous en terre digitale",url:"https://www.rdventerredigitale.com",desc:"Podcast digital learning — suivi manuel",prio:"Élevée",rss:false},
 ];
 const LINKEDIN=[
   {name:"APFORM",role:"Page officielle",peri:"Secteur vétérinaire / ASV",prio:"Prioritaire",url:"https://www.linkedin.com/company/apform"},
   {name:"SNVEL",role:"Syndicat National Vétérinaire",peri:"Secteur vétérinaire / ASV",prio:"Prioritaire",url:"https://www.linkedin.com/company/snvel"},
-  {name:"Ordre National des Vétérinaires",role:"Réglementation et déontologie",peri:"Secteur vétérinaire / ASV",prio:"Élevée",url:"https://www.linkedin.com/company/ordre-national-des-veterinaires"},
+  {name:"Ordre National des Vétérinaires",role:"Réglementation et déontologie",peri:"Secteur vétérinaire / ASV",prio:"Élevée",url:"https://www.linkedin.com/company/ordre-national-des-veterinaires/posts/?feedView=all"},
   {name:"OPCO EP",role:"Financement alternance vétérinaire",peri:"Secteur vétérinaire / ASV",prio:"Élevée",url:"https://www.linkedin.com/company/opcoep"},
   {name:"France Compétences",role:"Certification, Qualiopi, RNCP",peri:"Réglementation / Qualiopi",prio:"Prioritaire",url:"https://www.linkedin.com/company/france-competences"},
-  {name:"Centre Inffo",role:"Veille réglementaire formation",peri:"Réglementation / Qualiopi",prio:"Prioritaire",url:"https://www.linkedin.com/company/centre-inffo"},
+  {name:"Centre Inffo",role:"Veille réglementaire formation",peri:"Réglementation / Qualiopi",prio:"Prioritaire",url:"https://www.linkedin.com/company/centre-inffo/posts/?feedView=all"},
   {name:"Les Acteurs de la Compétence",role:"Fédération OF — Qualiopi",peri:"Réglementation / Qualiopi",prio:"Prioritaire",url:"https://www.linkedin.com/company/les-acteurs-de-la-competence"},
   {name:"Ministère du Travail",role:"Formation professionnelle, alternance",peri:"Réglementation / Qualiopi",prio:"Élevée",url:"https://www.linkedin.com/company/ministere-du-travail-de-france"},
   {name:"Digiforma",role:"Logiciel OF, Qualiopi",peri:"Réglementation / Qualiopi",prio:"Élevée",url:"https://www.linkedin.com/company/digiforma"},
@@ -592,11 +599,16 @@ const LINKEDIN=[
   {name:"eLearning Industry",role:"Tendances e-learning & IA",peri:"Innovation pédagogique & IA",prio:"Élevée",url:"https://www.linkedin.com/company/elearning-industry"},
   {name:"Thot Cursus",role:"Innovation pédagogique francophone",peri:"Innovation pédagogique & IA",prio:"Élevée",url:"https://www.linkedin.com/company/thot-cursus"},
   {name:"Articulate",role:"Storyline, Rise, outils auteur",peri:"Innovation pédagogique & IA",prio:"Moyenne",url:"https://www.linkedin.com/company/articulate"},
+  {name:"Alexis Zeitoun",role:"Contact professionnel",peri:"Innovation pédagogique & IA",prio:"Moyenne",url:"https://www.linkedin.com/in/alexiszeitoun/"},
+  {name:"Ulriche Edah",role:"Contact professionnel",peri:"Innovation pédagogique & IA",prio:"Moyenne",url:"https://www.linkedin.com/in/ulriche-edah/"},
+  {name:"Noé Porchier-Cizaire",role:"Contact professionnel",peri:"Innovation pédagogique & IA",prio:"Moyenne",url:"https://www.linkedin.com/in/noe-porchiercizaire/"},
+  {name:"Loïc Pellicano",role:"Contact professionnel",peri:"Innovation pédagogique & IA",prio:"Moyenne",url:"https://www.linkedin.com/in/loic-pellicano/"},
+  {name:"Yvan Demumieux",role:"Contact professionnel",peri:"Innovation pédagogique & IA",prio:"Moyenne",url:"https://www.linkedin.com/in/yvan-demumieux/"},
 ];
 
 function srcItem(s){
   const pc=s.prio==='Prioritaire'?'pill-h':s.prio==='Élevée'?'pill-m':'pill-g';
-  const rss=s.rss?'<span style="font-size:10px;color:var(--success-text);margin-left:4px">● RSS</span>':'';
+  const rss=s.rss?'<span style="font-size:10px;color:var(--success-text);margin-left:4px">● RSS auto</span>':'<span style="font-size:10px;color:var(--text3);margin-left:4px">👁 Suivi manuel</span>';
   return `<div class="source-item"><div><div style="font-size:13px;font-weight:500">${s.name}${rss}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${s.desc}</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><span class="pill ${pc}">${s.prio}</span><a href="${s.url}" target="_blank" style="font-size:12px;white-space:nowrap"><i class="ti ti-external-link"></i> Ouvrir</a></div></div>`;
 }
 function renderSrc(){
@@ -604,6 +616,21 @@ function renderSrc(){
   document.getElementById('src-vet').innerHTML=byGroup(SOURCES_VET);
   document.getElementById('src-reg').innerHTML=byGroup(SOURCES_REG);
   document.getElementById('src-ia').innerHTML=byGroup(SOURCES_IA);
+}
+function updateRefCounts(){
+  const allSrc=[...SOURCES_VET,...SOURCES_REG,...SOURCES_IA];
+  const ids={
+    'nb-sources':allSrc.length,
+    'src-total-count':allSrc.length,
+    'src-rss-count':RSS_FEEDS.length,
+    'nb-flux':RSS_FEEDS.length,
+    'st-rss-count':RSS_FEEDS.length,
+    'flux-rss-count':RSS_FEEDS.length,
+    'nb-linkedin':LINKEDIN.length,
+    'li-total-count':LINKEDIN.length,
+    'li-prio-count':LINKEDIN.filter(l=>l.prio==='Prioritaire').length,
+  };
+  Object.entries(ids).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.textContent=val;});
 }
 function renderLI(){
   const fp=document.getElementById('li-peri').value,pp=document.getElementById('li-prio').value;
@@ -627,7 +654,7 @@ function exportCSV(){
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-load();renderDash();renderSrc();renderLI();cancelEdit();
+load();renderDash();renderSrc();renderLI();updateRefCounts();cancelEdit();
 </script>
 </body>
 </html>
