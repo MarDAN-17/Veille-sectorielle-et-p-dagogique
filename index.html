@@ -87,6 +87,12 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 .progress-fill{height:100%;background:var(--accent);border-radius:9999px;transition:width .3s}
 .error-tag{font-size:10px;color:var(--danger-text);background:var(--danger-bg);padding:1px 6px;border-radius:9999px;margin-left:4px}
 .ok-tag{font-size:10px;color:var(--success-text);background:var(--success-bg);padding:1px 6px;border-radius:9999px;margin-left:4px}
+@media print{
+  nav,.filters,.btn,.notice{display:none !important}
+  body{background:#fff}
+  .app{max-width:100%;padding:0}
+  .export-table th{background:#eee !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 </style>
 </head>
 <body>
@@ -239,9 +245,17 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 <div id="export" class="section">
   <div class="section-title">Export Qualiopi</div>
   <div class="notice"><i class="ti ti-file-check"></i><span>Preuve de veille active pour vos audits Qualiopi — indicateurs I.23 à I.26.</span></div>
+  <div class="filters">
+    <span style="font-size:12px;color:var(--text2)">Période :</span>
+    <input type="date" id="exp-date-debut" onchange="renderExport()" title="Du">
+    <span style="font-size:12px;color:var(--text2)">→</span>
+    <input type="date" id="exp-date-fin" onchange="renderExport()" title="Au">
+    <button class="btn" onclick="resetExportFilters()"><i class="ti ti-refresh"></i> Réinitialiser</button>
+    <span id="exp-count" style="font-size:12px;color:var(--text2);margin-left:4px"></span>
+  </div>
   <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
     <button class="btn btn-primary" onclick="exportCSV()"><i class="ti ti-download"></i> Télécharger CSV</button>
-    <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Imprimer</button>
+    <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Imprimer / PDF</button>
   </div>
   <div style="overflow-x:auto">
     <table class="export-table">
@@ -553,6 +567,7 @@ function renderFlux(peri){
     }
     return;
   }
+  const savedUrls=new Set(articles.map(a=>a.url).filter(Boolean)); // détection des doublons par URL
   const groups={};
   items.forEach(i=>{if(!groups[i.peri])groups[i.peri]=[];groups[i.peri].push(i);});
   const order=['vet','reg','ia'];
@@ -570,6 +585,10 @@ function renderFlux(peri){
       const u=item.link.replace(/'/g,'&#39;');
       const pl=PERI_LABEL[p].replace(/'/g,'&#39;');
       const dsc=(item.desc||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,' ');
+      const isSaved=item.link&&savedUrls.has(item.link);
+      const saveBtn=isSaved
+        ?'<span class="status-badge s-done" style="font-size:11px;padding:3px 9px"><i class="ti ti-check"></i> Déjà enregistré</span>'
+        :`<button class="btn btn-primary" style="font-size:11px;padding:2px 9px" onclick="quickSave('${t}','${src}','${u}','${item.date}','${pl}','${dsc}','${item.urg}','${item.impact}')"><i class="ti ti-bookmark"></i> Sauvegarder</button>`;
       html+=`<div class="rss-item">
         <div class="rss-title"><a href="${item.link}" target="_blank" rel="noopener">${item.title}</a></div>
         ${item.desc?`<div class="rss-desc">${item.desc}</div>`:''}
@@ -578,10 +597,7 @@ function renderFlux(peri){
           ${urgP(item.urg)}
           <span>${item.source}</span>
           ${item.date?`<span>${item.date}</span>`:''}
-          <button class="btn btn-primary" style="font-size:11px;padding:2px 9px"
-            onclick="quickSave('${t}','${src}','${u}','${item.date}','${pl}','${dsc}','${item.urg}','${item.impact}')">
-            <i class="ti ti-bookmark"></i> Sauvegarder
-          </button>
+          ${saveBtn}
         </div>
       </div>`;
     });
@@ -631,7 +647,7 @@ function show(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(btn&&btn.classList)btn.classList.add('active');
-  ({fil:renderFil,sources:renderSrc,linkedin:renderLI,export:renderExport,dashboard:renderDash}[id]||function(){})();
+  ({fil:renderFil,sources:renderSrc,linkedin:renderLI,export:renderExport,dashboard:renderDash,flux:()=>{if(fluxLoaded)renderFlux(currentFilter);}}[id]||function(){})();
 }
 
 /* ══════════════════════════════════════
@@ -811,16 +827,37 @@ function renderLI(){
   const pe2={'Secteur vétérinaire / ASV':'pill-v','Réglementation / Qualiopi':'pill-r','Innovation pédagogique & IA':'pill-i'};
   document.getElementById('li-list').innerHTML=list.length?list.map(l=>`<div class="li-item"><div><div style="font-weight:500;font-size:13px">${l.name}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${l.role}</div><div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:4px"><span class="pill ${pe2[l.peri]}">${l.peri}</span><span class="pill ${pc2[l.prio]}">${l.prio}</span></div></div><a href="${l.url}" target="_blank" style="font-size:12px;flex-shrink:0;margin-top:2px;white-space:nowrap"><i class="ti ti-external-link"></i> Suivre</a></div>`).join(''):'<div class="empty">Aucun résultat.</div>';
 }
+function getExportFiltered(){
+  const df=document.getElementById('exp-date-debut').value;
+  const dt=document.getElementById('exp-date-fin').value;
+  return articles.filter(a=>{
+    if(df&&a.date<df)return false; // comparaison lexicographique valide car dates au format ISO AAAA-MM-JJ
+    if(dt&&a.date>dt)return false;
+    return true;
+  });
+}
+function resetExportFilters(){
+  document.getElementById('exp-date-debut').value='';
+  document.getElementById('exp-date-fin').value='';
+  renderExport();
+}
 function renderExport(){
   const tb=document.getElementById('exp-body');
-  if(!articles.length){tb.innerHTML='<tr><td colspan="8" class="empty" style="padding:1rem">Aucun article sauvegardé.</td></tr>';return;}
-  tb.innerHTML=articles.map(a=>`<tr><td>${a.date}</td><td>${a.titre}</td><td>${a.source}</td><td>${a.peri}</td><td>${a.thema||''}</td><td>${a.impact||''}</td><td>${a.urg}</td><td>${a.stat}</td></tr>`).join('');
+  const list=getExportFiltered();
+  const df=document.getElementById('exp-date-debut').value,dt=document.getElementById('exp-date-fin').value;
+  document.getElementById('exp-count').textContent=articles.length?`${list.length} article(s)${(df||dt)?' sur la période sélectionnée':''} sur ${articles.length} au total`:'';
+  if(!list.length){tb.innerHTML=`<tr><td colspan="8" class="empty" style="padding:1rem">${articles.length?'Aucun article sur cette période.':'Aucun article sauvegardé.'}</td></tr>`;return;}
+  tb.innerHTML=list.map(a=>`<tr><td>${a.date}</td><td>${a.titre}</td><td>${a.source}</td><td>${a.peri}</td><td>${a.thema||''}</td><td>${a.impact||''}</td><td>${a.urg}</td><td>${a.stat}</td></tr>`).join('');
 }
 function exportCSV(){
+  const list=getExportFiltered();
+  const df=document.getElementById('exp-date-debut').value,dt=document.getElementById('exp-date-fin').value;
   const h=['Date','Titre','Source','URL','Périmètre','Thématique','Impact','Urgence','Statut','Synthèse intro','Synthèse points clés','Enjeux APFORM'];
-  const rows=articles.map(a=>[a.date,a.titre,a.source,a.url||'',a.peri,a.thema||'',a.impact||'',a.urg,a.stat,a.synthIntro||'',a.synthPoints||'',a.synthEnjeux||''].map(v=>`"${(v+'').replace(/"/g,'""')}"`).join(','));
+  const rows=list.map(a=>[a.date,a.titre,a.source,a.url||'',a.peri,a.thema||'',a.impact||'',a.urg,a.stat,a.synthIntro||'',a.synthPoints||'',a.synthEnjeux||''].map(v=>`"${(v+'').replace(/"/g,'""')}"`).join(','));
   const blob=new Blob(['\uFEFF'+[h.join(','),...rows].join('\n')],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='veille-apform-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  const suffix=(df||dt)?`_${df||'debut'}_${dt||'fin'}`:'';
+  a.download='veille-apform'+suffix+'-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 }
 
 /* ══════════════════════════════════════
