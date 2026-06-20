@@ -152,6 +152,14 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
     <button class="tab-btn" onclick="filterFlux('reg',this)"><span class="pill pill-r">Qualiopi</span> <span id="cnt-reg" class="badge">0</span></button>
     <button class="tab-btn" onclick="filterFlux('ia',this)"><span class="pill pill-i">IA & Péda</span> <span id="cnt-ia" class="badge">0</span></button>
   </div>
+  <div class="filters" style="margin-bottom:1rem">
+    <select id="flux-urg-filter" onchange="setUrgFilter(this.value)">
+      <option value="">Toute urgence</option>
+      <option value="Haute">🔴 Urgence haute</option>
+      <option value="Moyenne">🟡 Urgence moyenne</option>
+      <option value="Basse">⚪ Urgence basse</option>
+    </select>
+  </div>
   <div id="flux-container"><div class="empty" style="text-align:center;padding:2rem"><span class="spin"><i class="ti ti-loader" style="font-size:20px"></i></span><br><br>Cliquez sur "Flux automatiques" pour charger les articles…</div></div>
 </div>
 
@@ -295,6 +303,7 @@ const PERI_CLASS={vet:"pill-v",reg:"pill-r",ia:"pill-i"};
 let allItems=[];
 let fluxLoaded=false;
 let currentFilter='';
+let currentUrgFilter='';
 let loadedCount=0;
 
 /* ══════════════════════════════════════
@@ -511,11 +520,18 @@ function retryFailed(){
 
 function updateCounts(){
   const total=allItems.length;
-  document.getElementById('cnt-all').textContent=total;
-  document.getElementById('cnt-vet').textContent=allItems.filter(i=>i.peri==='vet').length;
-  document.getElementById('cnt-reg').textContent=allItems.filter(i=>i.peri==='reg').length;
-  document.getElementById('cnt-ia').textContent=allItems.filter(i=>i.peri==='ia').length;
+  const base=currentUrgFilter?allItems.filter(i=>i.urg===currentUrgFilter):allItems;
+  document.getElementById('cnt-all').textContent=base.length;
+  document.getElementById('cnt-vet').textContent=base.filter(i=>i.peri==='vet').length;
+  document.getElementById('cnt-reg').textContent=base.filter(i=>i.peri==='reg').length;
+  document.getElementById('cnt-ia').textContent=base.filter(i=>i.peri==='ia').length;
   document.getElementById('nb-flux').textContent=total;
+}
+
+function setUrgFilter(v){
+  currentUrgFilter=v;
+  updateCounts();
+  renderFlux(currentFilter);
 }
 
 function filterFlux(peri,btn){
@@ -527,10 +543,13 @@ function filterFlux(peri,btn){
 
 function renderFlux(peri){
   const container=document.getElementById('flux-container');
-  const items=peri?allItems.filter(i=>i.peri===peri):allItems;
+  let items=peri?allItems.filter(i=>i.peri===peri):allItems;
+  if(currentUrgFilter)items=items.filter(i=>i.urg===currentUrgFilter);
   if(!items.length){
     if(fluxLoaded&&loadedCount===RSS_FEEDS.length){
-      container.innerHTML='<div class="empty">Aucun article chargé. Vérifiez votre connexion internet.</div>';
+      container.innerHTML=allItems.length
+        ?'<div class="empty">Aucun article ne correspond à ce filtre d\'urgence.</div>'
+        :'<div class="empty">Aucun article chargé. Vérifiez votre connexion internet.</div>';
     }
     return;
   }
