@@ -277,7 +277,6 @@ const RSS_FEEDS=[
   {url:"https://feeds.podcastics.com/podcastics/podcasts/rss/6628_a9c72191f50b205a6ebe0276fb677e8f.rss",name:"Podcast Formation Pro",peri:"ia"},
   {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCr5YOGCItfr20O_a5Zh8O_Q",name:"YouTube IA Péda 1",peri:"ia"},
   {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCrDwWp7EBBv4NwvScIpBDOA",name:"YouTube IA Péda 2",peri:"ia"},
-  {url:"https://www.audible.fr/blog/rss.xml",name:"Audible Blog",peri:"ia"},
   {url:"https://www.lafabriqueaneurones.com/rss.xml",name:"La Fabrique à Neurones",peri:"ia"},
 ];
 
@@ -316,42 +315,63 @@ function parseXML(xmlStr){
   return items.slice(0,6);
 }
 
+const PROXIES=[
+  u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+  u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),
+  u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
+];
+
 async function loadOneFeed(feed){
-  const proxy='https://api.allorigins.win/raw?url=';
-  try{
-    const r=await fetch(proxy+encodeURIComponent(feed.url),{signal:AbortSignal.timeout(8000)});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const text=await r.text();
-    const items=parseXML(text);
-    return items.map(i=>({...i,source:feed.name,peri:feed.peri}));
-  }catch(e){
-    return [];
+  for(let p=0;p<PROXIES.length;p++){
+    try{
+      const r=await fetch(PROXIES[p](feed.url),{signal:AbortSignal.timeout(9000)});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const text=await r.text();
+      const items=parseXML(text);
+      if(!items.length)throw new Error('Flux vide ou illisible');
+      return {ok:true,items:items.map(i=>({...i,source:feed.name,peri:feed.peri}))};
+    }catch(e){
+      if(p===PROXIES.length-1)return {ok:false,items:[],error:e.message};
+      // échec : on tente le proxy de secours suivant
+    }
   }
+  return {ok:false,items:[],error:'Échec'};
 }
 
-async function loadAllFeeds(){
-  if(fluxLoaded)return;
-  fluxLoaded=true;
-  allItems=[];
+let feedStatus={};
+
+async function loadAllFeeds(feedsSubset){
+  const isRetry=Array.isArray(feedsSubset);
+  const list=isRetry?feedsSubset:RSS_FEEDS;
+  if(!isRetry){
+    if(fluxLoaded)return;
+    fluxLoaded=true;
+    allItems=[];
+    feedStatus={};
+  }
   loadedCount=0;
   const container=document.getElementById('flux-container');
   const prog=document.getElementById('flux-progress');
   const progFill=document.getElementById('flux-progress-fill');
   const progLabel=document.getElementById('flux-progress-label');
   prog.style.display='block';
-  container.innerHTML='';
+  if(!isRetry)container.innerHTML='';
 
-  const total=RSS_FEEDS.length;
+  const total=list.length;
 
-  // Chargement séquentiel — un flux à la fois comme V18
-  for(let i=0;i<RSS_FEEDS.length;i++){
-    const items=await loadOneFeed(RSS_FEEDS[i]);
-    allItems.push(...items);
+  // Chargement séquentiel — un flux à la fois, avec proxy de secours par flux
+  for(let i=0;i<list.length;i++){
+    const feed=list[i];
+    const res=await loadOneFeed(feed);
+    feedStatus[feed.name]={ok:res.ok,peri:feed.peri};
+    if(res.ok){
+      allItems=allItems.filter(it=>it.source!==feed.name); // évite les doublons en cas de réessai
+      allItems.push(...res.items);
+    }
     loadedCount=i+1;
     const pct=Math.round(loadedCount/total*100);
     progFill.style.width=pct+'%';
-    progLabel.textContent=`Chargement… ${loadedCount}/${total} sources (${RSS_FEEDS[i].name})`;
-    // Affichage progressif dès les premiers articles
+    progLabel.textContent=`Chargement… ${loadedCount}/${total} sources (${feed.name})`;
     if(allItems.length>0) renderFlux(currentFilter);
   }
 
@@ -359,6 +379,33 @@ async function loadAllFeeds(){
   allItems.sort((a,b)=>b.date>a.date?1:-1);
   updateCounts();
   renderFlux(currentFilter);
+  renderFeedStatus();
+}
+
+function renderFeedStatus(){
+  const wrap=document.getElementById('flux-status-list');
+  if(!wrap)return;
+  const names=Object.keys(feedStatus);
+  const okCount=names.filter(n=>feedStatus[n].ok).length;
+  const nbFail=names.length-okCount;
+  document.getElementById('flux-status-summary').textContent=
+    nbFail===0?`✓ ${okCount}/${names.length} flux chargés avec succès.`
+    :`${okCount}/${names.length} flux chargés avec succès — ${nbFail} en échec (proxy ou site indisponible, pas un problème de données).`;
+  wrap.innerHTML=names.map(n=>{
+    const s=feedStatus[n];
+    return `<span style="display:inline-flex;align-items:center;margin:2px 6px 2px 0;font-size:11px">${n}<span class="${s.ok?'ok-tag':'error-tag'}">${s.ok?'✓ OK':'✗ Échec'}</span></span>`;
+  }).join('');
+  const failBtn=document.getElementById('btn-retry-failed');
+  if(failBtn){
+    failBtn.style.display=nbFail>0?'inline-flex':'none';
+    failBtn.innerHTML=`<i class="ti ti-refresh"></i> Réessayer les ${nbFail} flux en échec`;
+  }
+}
+
+function retryFailed(){
+  const failedNames=Object.keys(feedStatus).filter(n=>!feedStatus[n].ok);
+  const feeds=RSS_FEEDS.filter(f=>failedNames.includes(f.name));
+  if(feeds.length)loadAllFeeds(feeds);
 }
 
 function updateCounts(){
