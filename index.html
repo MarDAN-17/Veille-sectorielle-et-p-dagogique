@@ -684,7 +684,7 @@ function renderFil(){
   const list=articles.map((a,i)=>({...a,_i:i})).filter(a=>{if(fp&&a.peri!==fp)return false;if(fu&&a.urg!==fu)return false;if(fs&&a.stat!==fs)return false;return true;});
   const el=document.getElementById('fil-list');
   if(!list.length){el.innerHTML='<div class="empty">Aucun article sauvegardé. <a href="#" onclick="show(\'flux\',document.querySelectorAll(\'.nav-btn\')[1]);if(!fluxLoaded)loadAllFeeds();return false">Parcourez les flux →</a></div>';return;}
-  el.innerHTML=list.map(a=>`<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px"><div style="font-weight:500;font-size:14px;flex:1">${a.titre}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">${urgP(a.urg)}${a.impact?`<span style="font-size:11px;color:var(--text2)">Impact ${a.impact}</span>`:''}</div></div>${a.resume?`<div style="font-size:13px;color:var(--text2);margin-bottom:6px">${a.resume}</div>`:''}<div class="meta">${periP(a.peri)}${a.thema?`<span class="pill pill-g">${a.thema}</span>`:''}<span>${a.source}</span><span>${a.date}</span>${statP(a.stat)}${a.url?`<a href="${a.url}" target="_blank"><i class="ti ti-external-link"></i> Lire</a>`:''}</div>${(a.synthIntro||a.synthPoints||a.synthEnjeux)?`<div style="margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--radius);font-size:12px;line-height:1.5"><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:5px"><i class="ti ti-notes"></i> Synthèse stratégique</div>${a.synthIntro?`<div style="margin-bottom:4px"><strong>Intro :</strong> ${a.synthIntro}</div>`:''}${a.synthPoints?`<div style="margin-bottom:4px"><strong>Points clés :</strong><br>${a.synthPoints.replace(/\n/g,'<br>')}</div>`:''}${a.synthEnjeux?`<div><strong>Enjeux APFORM :</strong> ${a.synthEnjeux}</div>`:''}</div>`:''}<div style="margin-top:8px;display:flex;gap:6px"><button class="btn" style="font-size:12px;padding:3px 10px" onclick="editArticle(${a._i})"><i class="ti ti-edit"></i> Modifier</button><button class="btn btn-danger" style="font-size:12px;padding:3px 10px" onclick="deleteArticle(${a._i})"><i class="ti ti-trash"></i> Supprimer</button></div></div>`).join('');
+  el.innerHTML=list.map(a=>`<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px"><div style="font-weight:500;font-size:14px;flex:1">${a.titre}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">${urgP(a.urg)}${a.impact?`<span style="font-size:11px;color:var(--text2)">Impact ${a.impact}</span>`:''}</div></div>${a.resume?`<div style="font-size:13px;color:var(--text2);margin-bottom:6px">${a.resume}</div>`:''}<div class="meta">${periP(a.peri)}${a.thema?`<span class="pill pill-g">${a.thema}</span>`:''}<span>${a.source}</span><span>${a.date}</span>${statP(a.stat)}${a.url?`<a href="${a.url}" target="_blank"><i class="ti ti-external-link"></i> Lire</a>`:''}</div>${(a.synthIntro||a.synthPoints||a.synthEnjeux)?`<div style="margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--radius);font-size:12px;line-height:1.5"><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:5px"><i class="ti ti-notes"></i> Synthèse stratégique</div>${a.synthIntro?`<div style="margin-bottom:4px"><strong>Intro :</strong> ${a.synthIntro}</div>`:''}${a.synthPoints?`<div style="margin-bottom:4px"><strong>Points clés :</strong><br>${a.synthPoints.replace(/\n/g,'<br>')}</div>`:''}${a.synthEnjeux?`<div><strong>Enjeux APFORM :</strong> ${a.synthEnjeux}</div>`:''}</div>`:''}<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn" style="font-size:12px;padding:3px 10px" onclick="editArticle(${a._i})"><i class="ti ti-edit"></i> Modifier</button><button class="btn btn-primary" style="font-size:12px;padding:3px 10px" onclick="generateWordDoc(${a._i})"><i class="ti ti-file-word"></i> Fiche Word</button><button class="btn btn-danger" style="font-size:12px;padding:3px 10px" onclick="deleteArticle(${a._i})"><i class="ti ti-trash"></i> Supprimer</button></div></div>`).join('');
 }
 function resetFilters(){['f-peri','f-urg','f-stat'].forEach(id=>document.getElementById(id).value='');renderFil();}
 
@@ -858,6 +858,44 @@ function exportCSV(){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   const suffix=(df||dt)?`_${df||'debut'}_${dt||'fin'}`:'';
   a.download='veille-apform'+suffix+'-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+/* ══════════════════════════════════════
+   FICHE DE SYNTHÈSE WORD (.doc, ouverture native dans Word)
+   Génération 100% locale (HTML habillé en document Word),
+   aucune dépendance externe — fonctionne hors ligne.
+══════════════════════════════════════ */
+function generateWordDoc(i){
+  const a=articles[i];
+  if(!a)return;
+  const esc=s=>(s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const html=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset="utf-8"><title>${esc(a.titre)}</title>
+<style>
+  body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#1a1a18}
+  h1{font-size:16pt;color:#185fa5;border-bottom:2px solid #185fa5;padding-bottom:6px;margin-bottom:14px}
+  .meta{font-size:9pt;color:#6b6a65;margin-bottom:18px}
+  .meta span{margin-right:16px}
+  h2{font-size:12pt;color:#185fa5;margin-top:18px;margin-bottom:6px}
+  p{line-height:1.5}
+  .footer{margin-top:30px;font-size:8pt;color:#9b9a94;border-top:1px solid #ddd;padding-top:8px}
+</style></head>
+<body>
+  <h1>${esc(a.titre)}</h1>
+  <div class="meta"><span><b>Source :</b> ${esc(a.source)}</span><span><b>Date :</b> ${esc(a.date)}</span><span><b>Périmètre :</b> ${esc(PERI_LABEL[a.peri]||a.peri)}</span><span><b>Urgence :</b> ${esc(a.urg)}</span><span><b>Impact :</b> ${esc(a.impact||'—')}</span></div>
+  ${a.url?`<p><b>Lien :</b> <a href="${esc(a.url)}">${esc(a.url)}</a></p>`:''}
+  <h2>Résumé</h2><p>${esc(a.resume)||'—'}</p>
+  <h2>Introduction</h2><p>${esc(a.synthIntro)||'—'}</p>
+  <h2>Points principaux</h2><p>${(esc(a.synthPoints)||'—').replace(/\n/g,'<br>')}</p>
+  <h2>Enjeux pour APFORM</h2><p>${esc(a.synthEnjeux)||'—'}</p>
+  <div class="footer">Fiche générée automatiquement — Portail de Veille APFORM — ${new Date().toLocaleDateString('fr-FR')}</div>
+</body></html>`;
+  const blob=new Blob(['\ufeff'+html],{type:'application/msword'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(blob);
+  const safeName=(a.titre||'article').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w\s-]/g,'').trim().slice(0,60).replace(/\s+/g,'-');
+  link.download=`fiche-synthese-${safeName||'article'}.doc`;
+  link.click();
 }
 
 /* ══════════════════════════════════════
