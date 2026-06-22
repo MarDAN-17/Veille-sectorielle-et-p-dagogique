@@ -244,7 +244,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 <!-- EXPORT -->
 <div id="export" class="section">
   <div class="section-title">Export Qualiopi</div>
-  <div class="notice"><i class="ti ti-file-check"></i><span>Preuve de veille active pour vos audits Qualiopi — indicateurs I.23 à I.26.</span></div>
+  <div class="notice"><i class="ti ti-file-check"></i><span>Preuve de veille active pour vos audits Qualiopi — indicateur <strong>I.27</strong> : veille légale, réglementaire et évolution des compétences/métiers.</span></div>
   <div class="filters">
     <span style="font-size:12px;color:var(--text2)">Période :</span>
     <input type="date" id="exp-date-debut" onchange="renderExport()" title="Du">
@@ -256,6 +256,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
   <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
     <button class="btn btn-primary" onclick="exportCSV()"><i class="ti ti-download"></i> Télécharger CSV</button>
     <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Imprimer / PDF</button>
+    <button class="btn btn-primary" onclick="exportNotebookLM()" style="background:#4a6fa5"><i class="ti ti-brain"></i> Exporter pour NotebookLM</button>
   </div>
   <div style="overflow-x:auto">
     <table class="export-table">
@@ -898,10 +899,170 @@ function generateWordDoc(i){
   link.click();
 }
 
+
+/* ══════════════════════════════════════
+   EXPORT NOTEBOOKLM
+   Génère un fichier texte structuré :
+   - SOURCES PRIORITAIRES = articles sauvegardés (favoris)
+   - SOURCES CONTEXTUELLES = tous les articles remontés par flux RSS
+   Organisé par catégorie + prompt suggéré pour NotebookLM
+══════════════════════════════════════ */
+function exportNotebookLM(){
+  const PERI_NAMES={
+    'vet':'Secteur vétérinaire / ASV',
+    'reg':'Réglementation & Formation professionnelle',
+    'ia':'Innovation pédagogique & Intelligence artificielle'
+  };
+  const PERIS=['vet','reg','ia'];
+  const today=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+  const lines=[];
+
+  lines.push('# VEILLE STRATÉGIQUE APFORM — Export NotebookLM');
+  lines.push('# Généré le ' + today);
+  lines.push('# ─────────────────────────────────────────────────────────────────');
+  lines.push('# MODE D'EMPLOI :');
+  lines.push('#   1. Copiez ce fichier entier');
+  lines.push('#   2. Dans NotebookLM > Ajouter une source > Texte copié');
+  lines.push('#   3. Utilisez le prompt suggéré en bas de ce fichier');
+  lines.push('# ─────────────────────────────────────────────────────────────────');
+  lines.push('');
+
+  // ── BLOC 1 : SOURCES PRIORITAIRES (articles sauvegardés) ──
+  lines.push('═══════════════════════════════════════════════════════════════════');
+  lines.push('SOURCES PRIORITAIRES — Articles sélectionnés et sauvegardés');
+  lines.push('⚑ Appuyez votre analyse principalement sur ces sources');
+  lines.push('═══════════════════════════════════════════════════════════════════');
+  lines.push('');
+
+  if(!articles.length){
+    lines.push('(Aucun article sauvegardé — utilisez le bouton "Sauvegarder" dans les flux)');
+    lines.push('');
+  } else {
+    PERIS.forEach(p=>{
+      const arts=articles.filter(a=>(a.peri===p||a.peri===PERI_NAMES[p]));
+      if(!arts.length)return;
+      lines.push('── ' + PERI_NAMES[p].toUpperCase() + ' ──');
+      arts.forEach(a=>{
+        lines.push('• ' + (a.titre||'(sans titre)'));
+        lines.push('  Source : ' + (a.source||'—') + '  |  Date : ' + (a.date||'—') + '  |  Urgence : ' + (a.urg||'—'));
+        if(a.url) lines.push('  URL : ' + a.url);
+        if(a.synthIntro) lines.push('  Résumé : ' + a.synthIntro.slice(0,200));
+        lines.push('');
+      });
+    });
+  }
+
+  // ── BLOC 2 : SOURCES CONTEXTUELLES (flux RSS) ──
+  lines.push('═══════════════════════════════════════════════════════════════════');
+  lines.push('SOURCES CONTEXTUELLES — Tous les articles remontés par les flux RSS');
+  lines.push('ℹ Utilisez ces sources pour enrichir le contexte et identifier les tendances');
+  lines.push('═══════════════════════════════════════════════════════════════════');
+  lines.push('');
+
+  if(!allItems||!allItems.length){
+    lines.push('(Aucun article chargé — cliquez sur "Actualiser les flux" depuis l'onglet Flux RSS)');
+    lines.push('');
+  } else {
+    PERIS.forEach(p=>{
+      const items=allItems.filter(i=>i.peri===p);
+      if(!items.length)return;
+      lines.push('── ' + PERI_NAMES[p].toUpperCase() + ' ──');
+      items.forEach(i=>{
+        lines.push('• ' + (i.title||i.titre||'(sans titre)'));
+        lines.push('  Source : ' + (i.source||'—') + '  |  Date : ' + (i.date||'—'));
+        if(i.link) lines.push('  URL : ' + i.link);
+        if(i.desc) lines.push('  Extrait : ' + i.desc.slice(0,150) + '...');
+        lines.push('');
+      });
+    });
+  }
+
+  // ── BLOC 3 : PROMPT SUGGÉRÉ ──
+  const nbFav=articles.length;
+  const nbTotal=(allItems&&allItems.length)||0;
+  lines.push('═══════════════════════════════════════════════════════════════════');
+  lines.push('PROMPT SUGGÉRÉ POUR NOTEBOOKLM');
+  lines.push('═══════════════════════════════════════════════════════════════════');
+  lines.push('');
+  lines.push('Copiez-collez ce prompt dans la zone de chat de NotebookLM :');
+  lines.push('');
+  lines.push('---');
+  lines.push('Tu es un expert en veille stratégique pour APFORM, organisme de formation');
+  lines.push('certifié Qualiopi spécialisé dans la formation des Auxiliaires Spécialisés');
+  lines.push('Vétérinaires (ASV) et des équipes vétérinaires.');
+  lines.push('');
+  lines.push('Ce document contient ' + nbFav + ' article(s) sauvegardé(s) comme PRIORITAIRES');
+  lines.push('et ' + nbTotal + ' article(s) de contexte issus des flux de veille.');
+  lines.push('');
+  lines.push('En t'appuyant principalement sur les SOURCES PRIORITAIRES et en utilisant');
+  lines.push('les SOURCES CONTEXTUELLES pour les tendances de fond, rédige :');
+  lines.push('');
+  lines.push('1. SYNTHÈSE EXÉCUTIVE (5 lignes max)');
+  lines.push('   Les faits marquants de cette période pour APFORM.');
+  lines.push('');
+  lines.push('2. ANALYSE PAR AXE');
+  lines.push('   - Secteur vétérinaire : évolutions clés, signaux faibles');
+  lines.push('   - Formation professionnelle : réglementaire, Qualiopi, financement');
+  lines.push('   - Innovation pédagogique & IA : tendances, outils, pratiques');
+  lines.push('');
+  lines.push('3. OPPORTUNITÉS POUR APFORM');
+  lines.push('   Nouvelles formations possibles, partenariats, positionnements.');
+  lines.push('');
+  lines.push('4. RISQUES & POINTS DE VIGILANCE');
+  lines.push('   Menaces réglementaires, concurrentielles ou sectorielles.');
+  lines.push('');
+  lines.push('5. RECOMMANDATIONS PRIORITAIRES (3 actions concrètes max)');
+  lines.push('---');
+  lines.push('');
+  lines.push('# ─────────────────────────────────────────────────────────────────');
+  lines.push('# Fin de l'export — Portail de Veille APFORM — ' + today);
+
+  const content=lines.join('\n');
+  document.getElementById('nlm-content').value=content;
+  document.getElementById('nlm-modal').style.display='flex';
+}
+
+function copyNLM(){
+  const ta=document.getElementById('nlm-content');
+  ta.select();
+  document.execCommand('copy');
+  const ok=document.getElementById('nlm-copy-ok');
+  ok.style.display='inline';
+  setTimeout(()=>ok.style.display='none',2000);
+}
+
+function downloadNLM(){
+  const content=document.getElementById('nlm-content').value;
+  const blob=new Blob(['\uFEFF'+content],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='veille-apform-notebooklm-'+new Date().toISOString().slice(0,10)+'.txt';
+  a.click();
+}
+
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
 load();renderDash();renderSrc();renderLI();updateRefCounts();cancelEdit();
 </script>
+
+<!-- MODAL NOTEBOOKLM -->
+<div id="nlm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;align-items:center;justify-content:center">
+  <div style="background:var(--card);border-radius:10px;width:min(700px,92vw);max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.3)">
+    <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-weight:600;font-size:14px"><i class="ti ti-brain"></i> Export NotebookLM structuré</div>
+      <button class="btn" onclick="document.getElementById('nlm-modal').style.display='none'" style="padding:2px 10px">✕</button>
+    </div>
+    <div style="padding:.75rem 1.25rem;font-size:12px;color:var(--text2);background:var(--bg);border-bottom:1px solid var(--border)">
+      Copiez ce texte, puis collez-le comme <strong>source texte</strong> dans NotebookLM. Les articles favoris sont marqués comme prioritaires dans le prompt suggéré.
+    </div>
+    <textarea id="nlm-content" style="flex:1;resize:none;border:none;padding:1rem;font-family:monospace;font-size:11px;background:var(--bg);color:var(--text1);outline:none;overflow-y:auto"></textarea>
+    <div style="padding:.75rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="copyNLM()"><i class="ti ti-copy"></i> Copier</button>
+      <button class="btn" onclick="downloadNLM()"><i class="ti ti-download"></i> Télécharger .txt</button>
+      <span id="nlm-copy-ok" style="font-size:12px;color:green;align-self:center;display:none">✓ Copié !</span>
+    </div>
+  </div>
+</div>
 </body>
 </html>
