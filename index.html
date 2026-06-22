@@ -256,7 +256,13 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
   <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
     <button class="btn btn-primary" onclick="exportCSV()"><i class="ti ti-download"></i> Télécharger CSV</button>
     <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Imprimer / PDF</button>
-    <button class="btn btn-primary" onclick="exportNotebookLM()" style="background:#4a6fa5"><i class="ti ti-brain"></i> Exporter pour NotebookLM</button>
+    <select id="nlm-cat-filter" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text1);cursor:pointer">
+      <option value="">Toutes catégories</option>
+      <option value="vet">Secteur vétérinaire / ASV</option>
+      <option value="reg">Réglementation & Formation</option>
+      <option value="ia">Innovation pédagogique & IA</option>
+    </select>
+    <button class="btn btn-primary" onclick="exportNotebookLM()" style="background:#4a6fa5;color:#fff"><i class="ti ti-brain"></i> Exporter pour NotebookLM</button>
   </div>
   <div style="overflow-x:auto">
     <table class="export-table">
@@ -908,16 +914,18 @@ function generateWordDoc(i){
    Organisé par catégorie + prompt suggéré pour NotebookLM
 ══════════════════════════════════════ */
 function exportNotebookLM(){
+  const catFilter=document.getElementById('nlm-cat-filter').value;
   const PERI_NAMES={
     'vet':'Secteur vétérinaire / ASV',
     'reg':'Réglementation & Formation professionnelle',
     'ia':'Innovation pédagogique & Intelligence artificielle'
   };
-  const PERIS=['vet','reg','ia'];
+  const PERIS=catFilter?[catFilter]:['vet','reg','ia'];
   const today=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
   const lines=[];
 
-  lines.push('# VEILLE STRATÉGIQUE APFORM — Export NotebookLM');
+  const catLabel=catFilter?(' — '+{vet:'Secteur vétérinaire',reg:'Réglementation & Formation',ia:'Innovation pédagogique & IA'}[catFilter]):'';
+  lines.push('# VEILLE STRATÉGIQUE APFORM — Export NotebookLM' + catLabel);
   lines.push('# Généré le ' + today);
   lines.push('# ─────────────────────────────────────────────────────────────────');
   lines.push("# MODE D'EMPLOI :");
