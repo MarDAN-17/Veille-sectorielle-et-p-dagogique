@@ -986,8 +986,8 @@ function exportNotebookLM(){
   }
 
   // ── BLOC 3 : PROMPT SUGGÉRÉ ──
-  const nbFav=articles.length;
-  const nbTotal=(allItems&&allItems.length)||0;
+  const nbFav=catFilter?articles.filter(a=>a.peri===catFilter||a.peri===PERI_NAMES[catFilter]).length:articles.length;
+  const nbTotal=catFilter?(allItems||[]).filter(i=>i.peri===catFilter).length:(allItems&&allItems.length)||0;
   lines.push('═══════════════════════════════════════════════════════════════════');
   lines.push('PROMPT SUGGÉRÉ POUR NOTEBOOKLM');
   lines.push('═══════════════════════════════════════════════════════════════════');
@@ -1005,13 +1005,32 @@ function exportNotebookLM(){
   lines.push('En t\'appuyant principalement sur les SOURCES PRIORITAIRES et en utilisant');
   lines.push('les SOURCES CONTEXTUELLES pour les tendances de fond, rédige :');
   lines.push('');
+  const catSuffix=catFilter?(' sur l\'axe '+{vet:'vétérinaire & ASV',reg:'réglementation & formation',ia:'innovation pédagogique & IA'}[catFilter]):'';
   lines.push('1. SYNTHÈSE EXÉCUTIVE (5 lignes max)');
-  lines.push('   Les faits marquants de cette période pour APFORM.');
+  lines.push('   Les faits marquants de cette période pour APFORM' + catSuffix + '.');
   lines.push('');
-  lines.push('2. ANALYSE PAR AXE');
-  lines.push('   - Secteur vétérinaire : évolutions clés, signaux faibles');
-  lines.push('   - Formation professionnelle : réglementaire, Qualiopi, financement');
-  lines.push('   - Innovation pédagogique & IA : tendances, outils, pratiques');
+  // Axe(s) adapté(s) au filtre sélectionné
+  if(!catFilter){
+    lines.push('2. ANALYSE PAR AXE');
+    lines.push('   - Secteur vétérinaire : évolutions clés, signaux faibles');
+    lines.push('   - Formation professionnelle : réglementaire, Qualiopi, financement');
+    lines.push('   - Innovation pédagogique & IA : tendances, outils, pratiques');
+  } else if(catFilter==='vet'){
+    lines.push('2. ANALYSE SECTORIELLE — Secteur vétérinaire & ASV');
+    lines.push('   - Évolutions du marché et des pratiques vétérinaires');
+    lines.push('   - Évolutions des métiers ASV et des compétences associées');
+    lines.push('   - Signaux faibles : recrutement, délégation d\'actes, bien-être animal, télémédecine');
+  } else if(catFilter==='reg'){
+    lines.push('2. ANALYSE RÉGLEMENTAIRE & FORMATION');
+    lines.push('   - Évolutions Qualiopi, France Compétences, RNCP');
+    lines.push('   - Financement de la formation : CPF, OPCO, alternance');
+    lines.push('   - Points de vigilance pour la certification APFORM');
+  } else if(catFilter==='ia'){
+    lines.push('2. ANALYSE INNOVATION PÉDAGOGIQUE & IA');
+    lines.push('   - Nouvelles pratiques et outils pédagogiques');
+    lines.push('   - Usages de l\'IA dans la formation professionnelle');
+    lines.push('   - Ce qui est déployable maintenant vs expérimental');
+  }
   lines.push('');
   lines.push('3. OPPORTUNITÉS POUR APFORM');
   lines.push('   Nouvelles formations possibles, partenariats, positionnements.');
