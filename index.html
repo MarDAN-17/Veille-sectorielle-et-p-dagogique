@@ -920,7 +920,7 @@ function exportNotebookLM(){
   lines.push('# VEILLE STRATÉGIQUE APFORM — Export NotebookLM');
   lines.push('# Généré le ' + today);
   lines.push('# ─────────────────────────────────────────────────────────────────');
-  lines.push('# MODE D'EMPLOI :');
+  lines.push("# MODE D'EMPLOI :");
   lines.push('#   1. Copiez ce fichier entier');
   lines.push('#   2. Dans NotebookLM > Ajouter une source > Texte copié');
   lines.push('#   3. Utilisez le prompt suggéré en bas de ce fichier');
@@ -960,7 +960,7 @@ function exportNotebookLM(){
   lines.push('');
 
   if(!allItems||!allItems.length){
-    lines.push('(Aucun article chargé — cliquez sur "Actualiser les flux" depuis l'onglet Flux RSS)');
+    lines.push('(Aucun article chargé — cliquez sur "Actualiser les flux" depuis l\'onglet Flux RSS)');
     lines.push('');
   } else {
     PERIS.forEach(p=>{
@@ -994,7 +994,7 @@ function exportNotebookLM(){
   lines.push('Ce document contient ' + nbFav + ' article(s) sauvegardé(s) comme PRIORITAIRES');
   lines.push('et ' + nbTotal + ' article(s) de contexte issus des flux de veille.');
   lines.push('');
-  lines.push('En t'appuyant principalement sur les SOURCES PRIORITAIRES et en utilisant');
+  lines.push('En t\'appuyant principalement sur les SOURCES PRIORITAIRES et en utilisant');
   lines.push('les SOURCES CONTEXTUELLES pour les tendances de fond, rédige :');
   lines.push('');
   lines.push('1. SYNTHÈSE EXÉCUTIVE (5 lignes max)');
@@ -1015,7 +1015,7 @@ function exportNotebookLM(){
   lines.push('---');
   lines.push('');
   lines.push('# ─────────────────────────────────────────────────────────────────');
-  lines.push('# Fin de l'export — Portail de Veille APFORM — ' + today);
+  lines.push('# Fin de l\'export — Portail de Veille APFORM — ' + today);
 
   const content=lines.join('\n');
   document.getElementById('nlm-content').value=content;
