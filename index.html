@@ -53,7 +53,7 @@ textarea{min-height:70px;resize:vertical;width:100%}
 .rss-item:last-child{border-bottom:none}
 .rss-title a{color:var(--text);text-decoration:none;font-size:13px;font-weight:500}
 .rss-title a:hover{color:var(--accent);text-decoration:underline}
-.rss-desc{font-size:12px;color:var(--text2);margin:3px 0 5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.rss-desc{font-size:12px;color:var(--text2);margin:3px 0 5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .source-item{display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:.5px solid var(--border);gap:12px}
 .source-item:last-child{border-bottom:none}
 .li-item{display:flex;justify-content:space-between;align-items:flex-start;padding:.75rem 0;border-bottom:.5px solid var(--border)}
@@ -87,12 +87,6 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 .progress-fill{height:100%;background:var(--accent);border-radius:9999px;transition:width .3s}
 .error-tag{font-size:10px;color:var(--danger-text);background:var(--danger-bg);padding:1px 6px;border-radius:9999px;margin-left:4px}
 .ok-tag{font-size:10px;color:var(--success-text);background:var(--success-bg);padding:1px 6px;border-radius:9999px;margin-left:4px}
-@media print{
-  nav,.filters,.btn,.notice{display:none !important}
-  body{background:#fff}
-  .app{max-width:100%;padding:0}
-  .export-table th{background:#eee !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-}
 </style>
 </head>
 <body>
@@ -115,12 +109,12 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 
 <nav>
   <button class="nav-btn active" onclick="show('dashboard',this)"><i class="ti ti-layout-dashboard"></i> Tableau de bord</button>
-  <button class="nav-btn" onclick="show('flux',this);if(!fluxLoaded)loadAllFeeds()"><i class="ti ti-rss"></i> Flux automatiques <span class="badge" id="nb-flux">39</span></button>
+  <button class="nav-btn" onclick="show('flux',this);if(!fluxLoaded)loadAllFeeds()"><i class="ti ti-rss"></i> Flux automatiques <span class="badge" id="nb-flux">66</span></button>
   <button class="nav-btn" onclick="show('fil',this)"><i class="ti ti-bookmark"></i> Mes articles <span class="badge" id="nb-badge">0</span></button>
   <button class="nav-btn" onclick="show('ajouter',this)"><i class="ti ti-plus"></i> Ajouter</button>
   <span class="nav-sep"></span>
-  <button class="nav-btn" onclick="show('sources',this)"><i class="ti ti-books"></i> Sources <span class="badge" id="nb-sources">43</span></button>
-  <button class="nav-btn" onclick="show('linkedin',this)"><i class="ti ti-brand-linkedin"></i> LinkedIn <span class="badge" id="nb-linkedin">17</span></button>
+  <button class="nav-btn" onclick="show('sources',this)"><i class="ti ti-books"></i> Sources <span class="badge">43</span></button>
+  <button class="nav-btn" onclick="show('linkedin',this)"><i class="ti ti-brand-linkedin"></i> LinkedIn <span class="badge">17</span></button>
   <span class="nav-sep"></span>
   <button class="nav-btn" onclick="show('export',this)"><i class="ti ti-file-export"></i> Export Qualiopi</button>
 </nav>
@@ -131,7 +125,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
     <div class="stat"><div class="stat-label">Articles sauvegardés</div><div class="stat-val" id="st-total">0</div></div>
     <div class="stat"><div class="stat-label"><span class="dot dot-h"></span>Urgence haute</div><div class="stat-val" id="st-h">0</div></div>
     <div class="stat"><div class="stat-label"><span class="dot dot-m"></span>Urgence moyenne</div><div class="stat-val" id="st-m">0</div></div>
-    <div class="stat"><div class="stat-label"><i class="ti ti-rss"></i> Flux RSS actifs</div><div class="stat-val" id="st-rss-count">39</div></div>
+    <div class="stat"><div class="stat-label"><i class="ti ti-rss"></i> Flux RSS actifs</div><div class="stat-val">66</div></div>
   </div>
   <div class="card">
     <div style="font-size:14px;font-weight:500;margin-bottom:1rem">Répartition par périmètre</div>
@@ -147,7 +141,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 <!-- FLUX -->
 <div id="flux" class="section">
   <div class="section-title">Flux automatiques</div>
-  <div class="notice"><i class="ti ti-sparkles"></i><span>Articles chargés en direct depuis vos <span id="flux-rss-count">39</span> flux RSS. Périmètre, urgence et résumé sont évalués automatiquement (règles, sans IA) — tout reste modifiable à la sauvegarde. Cliquez <strong>Sauvegarder</strong> pour archiver un article dans votre fil de veille.</span></div>
+  <div class="notice"><i class="ti ti-sparkles"></i><span>Articles chargés en direct depuis vos 39 flux RSS. Cliquez <strong>Sauvegarder</strong> pour archiver un article dans votre fil de veille.</span></div>
   <div id="flux-progress" style="display:none">
     <div style="font-size:12px;color:var(--text2);margin-bottom:6px" id="flux-progress-label">Chargement…</div>
     <div class="progress-bar"><div class="progress-fill" id="flux-progress-fill" style="width:0%"></div></div>
@@ -157,14 +151,6 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
     <button class="tab-btn" onclick="filterFlux('vet',this)"><span class="pill pill-v">Vétérinaire</span> <span id="cnt-vet" class="badge">0</span></button>
     <button class="tab-btn" onclick="filterFlux('reg',this)"><span class="pill pill-r">Qualiopi</span> <span id="cnt-reg" class="badge">0</span></button>
     <button class="tab-btn" onclick="filterFlux('ia',this)"><span class="pill pill-i">IA & Péda</span> <span id="cnt-ia" class="badge">0</span></button>
-  </div>
-  <div class="filters" style="margin-bottom:1rem">
-    <select id="flux-urg-filter" onchange="setUrgFilter(this.value)">
-      <option value="">Toute urgence</option>
-      <option value="Haute">🔴 Urgence haute</option>
-      <option value="Moyenne">🟡 Urgence moyenne</option>
-      <option value="Basse">⚪ Urgence basse</option>
-    </select>
   </div>
   <div id="flux-container"><div class="empty" style="text-align:center;padding:2rem"><span class="spin"><i class="ti ti-loader" style="font-size:20px"></i></span><br><br>Cliquez sur "Flux automatiques" pour charger les articles…</div></div>
 </div>
@@ -205,15 +191,6 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
     <div class="form-row"><label>Impact</label><select id="a-impact"><option value="">Sélectionner…</option><option>Fort</option><option>Moyen</option><option>Faible</option></select></div>
   </div>
   <div class="form-row"><label>Statut</label><select id="a-stat"><option>Nouveau</option><option>Lu</option><option>Traité</option><option>Archivé</option></select></div>
-  <div class="card" style="margin-top:.75rem;background:var(--bg2)">
-    <div style="font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px"><i class="ti ti-notes"></i> Synthèse stratégique (optionnelle)</div>
-    <div class="form-row">
-      <label style="display:flex;justify-content:space-between;align-items:center">Intro <button type="button" class="btn" style="font-size:11px;padding:2px 8px" onclick="document.getElementById('a-synth-intro').value=document.getElementById('a-resume').value"><i class="ti ti-sparkles"></i> Reprendre le résumé</button></label>
-      <textarea id="a-synth-intro" placeholder="Contexte de l'article en 1-2 phrases…"></textarea>
-    </div>
-    <div class="form-row"><label>Points principaux de l'article</label><textarea id="a-synth-points" placeholder="Listez les points clés (un par ligne)"></textarea></div>
-    <div class="form-row" style="margin-bottom:0"><label>Enjeux pour APFORM</label><textarea id="a-synth-enjeux" placeholder="Qu'est-ce que cela change ou implique pour APFORM ?"></textarea></div>
-  </div>
   <div style="display:flex;gap:8px;margin-top:.5rem;flex-wrap:wrap">
     <button class="btn btn-primary" onclick="saveArticle()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
     <button class="btn" onclick="cancelEdit()"><i class="ti ti-x"></i> Annuler</button>
@@ -223,8 +200,8 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 
 <!-- SOURCES -->
 <div id="sources" class="section">
-  <div class="section-title">Sources — <span id="src-total-count">43</span> références · <span id="src-rss-count">39</span> flux RSS auto-agrégés</div>
-  <div class="notice"><i class="ti ti-info-circle"></i><span><span style="color:var(--success-text)">● RSS auto</span> = flux intégré et chargé automatiquement dans l'onglet « Flux automatiques » · <span style="color:var(--text3)">👁 Suivi manuel</span> = pas de flux RSS disponible, à consulter directement via le lien « Ouvrir » (LinkedIn, sites institutionnels sans flux) · Priorité : 🔴 Prioritaire · 🟡 Élevée · ⚪ Moyenne</span></div>
+  <div class="section-title">Sources — 43 références · 66 flux RSS</div>
+  <div class="notice"><i class="ti ti-info-circle"></i><span><span style="color:var(--success-text)">● RSS</span> = flux intégré au portail · Priorité : 🔴 Prioritaire · 🟡 Élevée · ⚪ Moyenne</span></div>
   <div class="card" style="margin-bottom:.75rem"><div style="font-weight:500;font-size:13px;margin-bottom:10px"><span class="pill pill-v">Secteur vétérinaire / ASV</span></div><div id="src-vet"></div></div>
   <div class="card" style="margin-bottom:.75rem"><div style="font-weight:500;font-size:13px;margin-bottom:10px"><span class="pill pill-r">Réglementation / Qualiopi</span></div><div id="src-reg"></div></div>
   <div class="card"><div style="font-weight:500;font-size:13px;margin-bottom:10px"><span class="pill pill-i">Innovation pédagogique & IA</span></div><div id="src-ia"></div></div>
@@ -232,8 +209,8 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 
 <!-- LINKEDIN -->
 <div id="linkedin" class="section">
-  <div class="section-title">LinkedIn — <span id="li-total-count">17</span> contacts & communautés <span style="font-size:11px;color:var(--text3);font-weight:400">(suivi 100% manuel — non agrégé)</span></div>
-  <div class="notice"><i class="ti ti-brand-linkedin"></i><span>Suivez ces pages et activez la 🔔 sur les <span id="li-prio-count">7</span> prioritaires.</span></div>
+  <div class="section-title">LinkedIn — 17 contacts & communautés</div>
+  <div class="notice"><i class="ti ti-brand-linkedin"></i><span>Suivez ces pages et activez la 🔔 sur les 6 prioritaires.</span></div>
   <div class="filters">
     <select id="li-peri" onchange="renderLI()"><option value="">Tous périmètres</option><option>Secteur vétérinaire / ASV</option><option>Réglementation / Qualiopi</option><option>Innovation pédagogique & IA</option></select>
     <select id="li-prio" onchange="renderLI()"><option value="">Toute priorité</option><option>Prioritaire</option><option>Élevée</option><option>Moyenne</option></select>
@@ -244,25 +221,10 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 <!-- EXPORT -->
 <div id="export" class="section">
   <div class="section-title">Export Qualiopi</div>
-  <div class="notice"><i class="ti ti-file-check"></i><span>Preuve de veille active pour vos audits Qualiopi — indicateur <strong>I.27</strong> : veille légale, réglementaire et évolution des compétences/métiers.</span></div>
-  <div class="filters">
-    <span style="font-size:12px;color:var(--text2)">Période :</span>
-    <input type="date" id="exp-date-debut" onchange="renderExport()" title="Du">
-    <span style="font-size:12px;color:var(--text2)">→</span>
-    <input type="date" id="exp-date-fin" onchange="renderExport()" title="Au">
-    <button class="btn" onclick="resetExportFilters()"><i class="ti ti-refresh"></i> Réinitialiser</button>
-    <span id="exp-count" style="font-size:12px;color:var(--text2);margin-left:4px"></span>
-  </div>
+  <div class="notice"><i class="ti ti-file-check"></i><span>Preuve de veille active pour vos audits Qualiopi — indicateurs I.23 à I.26.</span></div>
   <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
     <button class="btn btn-primary" onclick="exportCSV()"><i class="ti ti-download"></i> Télécharger CSV</button>
-    <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Imprimer / PDF</button>
-    <select id="nlm-cat-filter" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text1);cursor:pointer">
-      <option value="">Toutes catégories</option>
-      <option value="vet">Secteur vétérinaire / ASV</option>
-      <option value="reg">Réglementation & Formation</option>
-      <option value="ia">Innovation pédagogique & IA</option>
-    </select>
-    <button class="btn btn-primary" onclick="exportNotebookLM()" style="background:#4a6fa5;color:#fff"><i class="ti ti-brain"></i> Exporter pour NotebookLM</button>
+    <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Imprimer</button>
   </div>
   <div style="overflow-x:auto">
     <table class="export-table">
@@ -283,8 +245,8 @@ const RSS_FEEDS=[
   {url:"https://www.veterinaire.fr/rss.xml",name:"Ordre des Vétérinaires",peri:"vet"},
   {url:"https://soutienveterinaire.fr/feed/",name:"Soutien Vétérinaire",peri:"vet"},
   {url:"https://www.lepointveterinaire.fr/rss",name:"Le Point Vétérinaire",peri:"vet"},
-  {url:"https://ainoa-asso.fr/feed/",name:"AINOA",peri:"ia"},
-  {url:"https://portaileduc.net/website/feed/",name:"PortailEduc",peri:"ia"},
+  {url:"https://ainoa-asso.fr/feed/",name:"AINOA",peri:"vet"},
+  {url:"https://portaileduc.net/website/feed/",name:"PortailEduc",peri:"vet"},
   {url:"https://www.clubasv.fr/feed/",name:"Club ASV",peri:"vet"},
   {url:"https://www.temavet.fr/rss.xml",name:"TémaVet",peri:"vet"},
   {url:"https://supveto.com/feed/",name:"SupVéto",peri:"vet"},
@@ -292,6 +254,15 @@ const RSS_FEEDS=[
   {url:"https://agriculture.gouv.fr/rss.xml",name:"Min. Agriculture",peri:"vet"},
   {url:"https://agriculture.gouv.fr/rss_presse.xml",name:"Min. Agriculture Presse",peri:"vet"},
   {url:"https://agriculture.gouv.fr/rss_publications.xml",name:"Min. Agriculture Publications",peri:"vet"},
+  {url:"https://legifrss.org/latest?q=v%C3%A9t%C3%A9rinaire",name:"Légifrance — Vétérinaire",peri:"vet"},
+  {url:"https://legifrss.org/latest?q=sant%C3%A9%20animale",name:"Légifrance — Santé animale",peri:"vet"},
+  {url:"https://legifrss.org/latest?q=m%C3%A9decine%20v%C3%A9t%C3%A9rinaire",name:"Légifrance — Médecine vétérinaire",peri:"vet"},
+  {url:"https://legifrss.org/latest?q=pharmacovigilance%20v%C3%A9t%C3%A9rinaire",name:"Légifrance — Pharmacovigilance vétérinaire",peri:"vet"},
+  {url:"https://legifrss.org/latest?q=m%C3%A9dicament%20v%C3%A9t%C3%A9rinaire",name:"Légifrance — Médicament vétérinaire",peri:"vet"},
+  {url:"https://legifrss.org/latest?q=bien-%C3%AAtre%20animal",name:"Légifrance — Bien-être animal",peri:"vet"},
+  {url:"https://legifrss.org/latest?q=protection%20animale",name:"Légifrance — Protection animale",peri:"vet"},
+  {url:"https://legifrss.org/latest?q=%C3%A9levage",name:"Légifrance — Élevage",peri:"vet"},
+  {url:"https://legifrss.org/latest?q=alimentation%20animale",name:"Légifrance — Alimentation animale",peri:"vet"},
   {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCCjhb6t5EvFi1Q9dxjtsGug",name:"YouTube Vétérinaire 1",peri:"vet"},
   {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCQz81anVcxld-6HNaDgJk8w",name:"YouTube Vétérinaire 2",peri:"vet"},
   {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCDtPj4JwltQ7eGcvONk7Bdg",name:"YouTube Vétérinaire 3",peri:"vet"},
@@ -315,7 +286,26 @@ const RSS_FEEDS=[
   {url:"https://feeds.podcastics.com/podcastics/podcasts/rss/6628_a9c72191f50b205a6ebe0276fb677e8f.rss",name:"Podcast Formation Pro",peri:"ia"},
   {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCr5YOGCItfr20O_a5Zh8O_Q",name:"YouTube IA Péda 1",peri:"ia"},
   {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCrDwWp7EBBv4NwvScIpBDOA",name:"YouTube IA Péda 2",peri:"ia"},
-  {url:"https://www.lafabriqueaneurones.com/rss.xml",name:"La Fabrique à Neurones",peri:"ia"},
+  {url:"https://www.audible.fr/blog/rss.xml",name:"Audible Blog",peri:"ia"},
+  {url:"https://rss.app/feeds/pwLs2q5Qei1xfnGG.xml",name:"Blog Articulate",peri:"ia"},
+  {url:"https://rss.app/feeds/esKG9cZhHIbFAZVl.xml",name:"Blog MyVirtualClassroom",peri:"ia"},
+  {url:"https://rss.app/feeds/zdAHoPpGZHrQhHoq.xml",name:"RDV en terre digitale",peri:"ia"},
+  {url:"https://www.digiformag.com/feed/",name:"Digiformag",peri:"ia"},
+  {url:"https://www.certif-avenir.fr/blog-feed.xml",name:"Certif Avenir",peri:"ia"},
+  {url:"https://rss.app/feeds/dFVbEbdCTARlNGNm.xml",name:"OPCO EP",peri:"reg"},
+  {url:"https://www.veilleformation.com/feed",name:"Veille Formation",peri:"reg"},
+  {url:"https://www.francecompetences.fr/rss",name:"France Competences RSS",peri:"reg"},
+  {url:"https://www.afpa.fr/l-afpa/espace-presse/rss",name:"AFPA",peri:"reg"},
+  {url:"https://www.centre-inffo.fr/category/site-centre-inffo/actualites-centre-inffo/le-quotidien-de-la-formation-actualite-formation-professionnelle-apprentissage/feed",name:"Centre Inffo Quotidien",peri:"reg"},
+  {url:"https://www.centre-inffo.fr/category/site-reforme/feed",name:"Centre Inffo Reforme",peri:"reg"},
+  {url:"https://www.centre-inffo.fr/category/site-droit-formation/actualites-droit/feed",name:"Centre Inffo Droit",peri:"reg"},
+  {url:"https://www.centre-inffo.fr/category/actualites-regions/feed",name:"Centre Inffo Regions",peri:"reg"},
+  {url:"https://www.centre-inffo.fr/category/actualites-europe/feed",name:"Centre Inffo Europe",peri:"reg"},
+  {url:"https://www.centre-inffo.fr/category/innovation-formation/feed",name:"Centre Inffo Innovation",peri:"reg"},
+  {url:"https://rss.app/feeds/ms3IMBpi8WOtq4o7.xml",name:"SNVEL",peri:"vet"},
+  {url:"https://rss.app/feeds/hZ6uwoVUoNLK1dsf.xml",name:"La Depeche Veterinaire",peri:"vet"},
+  {url:"https://rss.app/feeds/PceSswzMXGRPvei0.xml",name:"Le Point Veterinaire",peri:"vet"},
+  {url:"https://www.cnr-bea.fr/feed/",name:"CNR Bien-etre animal",peri:"vet"},
 ];
 
 const PERI_LABEL={vet:"Secteur vétérinaire / ASV",reg:"Réglementation / Qualiopi",ia:"Innovation pédagogique & IA"};
@@ -324,185 +314,52 @@ const PERI_CLASS={vet:"pill-v",reg:"pill-r",ia:"pill-i"};
 let allItems=[];
 let fluxLoaded=false;
 let currentFilter='';
-let currentUrgFilter='';
 let loadedCount=0;
 
-/* ══════════════════════════════════════
-   CLASSIFICATION FINE PAR MOTS-CLÉS (filet de sécurité)
-   Chaque flux a un périmètre par défaut (peri dans RSS_FEEDS),
-   déterminé par la nature de la source. Certaines sources publiant
-   parfois hors de leur périmètre habituel, on affine le classement
-   article par article via le titre + le résumé.
-   Le périmètre par défaut garde un bonus de confiance (+4 pts) :
-   on ne bascule vers un autre périmètre que si son score y est
-   clairement supérieur — évite les faux positifs sur une simple
-   mention isolée.
-══════════════════════════════════════ */
-const CLASSIF_KEYWORDS={
-  vet:["vétérinaire","véto","asv","auxiliaire spécialisé","clinique vétérinaire","santé animale","médecine vétérinaire","nac","zoonose","épizootie","médicament vétérinaire","ordre des vétérinaires","snvel","afvac","cabinet vétérinaire","élevage","bien-être animal"],
-  reg:["qualiopi","france compétences","rncp","répertoire spécifique","opco","cpf","alternance","apprentissage","afest","certification professionnelle","décret","arrêté","ministère du travail","financement de la formation","indicateur qualité","audit qualiopi","centre inffo","cnefop"],
-  ia:["intelligence artificielle"," ia ","ia générative","chatgpt","agent ia","machine learning","adaptive learning","microlearning","mobile learning","ludopédagogie","gamification","réalité virtuelle","réalité augmentée","immersive learning","learning analytics","digital learning","e-learning","elearning"," lms ","ingénierie pédagogique","innovation pédagogique","neurosciences","blended learning","social learning"]
-};
-function classifyArticle(title,desc,defaultPeri){
-  const txt=(' '+title+' '+desc+' ').toLowerCase();
-  const titleTxt=(' '+title+' ').toLowerCase();
-  const scores={vet:0,reg:0,ia:0};
-  Object.keys(CLASSIF_KEYWORDS).forEach(p=>{
-    CLASSIF_KEYWORDS[p].forEach(kw=>{
-      if(txt.includes(kw))scores[p]+=titleTxt.includes(kw)?3:1; // un mot-clé dans le titre pèse plus que dans le résumé
-    });
-  });
-  scores[defaultPeri]+=4; // bonus de confiance pour le périmètre par défaut de la source
-  let best=defaultPeri,bestScore=scores[defaultPeri];
-  Object.keys(scores).forEach(p=>{if(scores[p]>bestScore){best=p;bestScore=scores[p];}});
-  return best;
-}
-
-/* ══════════════════════════════════════
-   ÉVALUATION AUTOMATIQUE URGENCE & IMPACT (sans IA)
-   Score de pertinence stratégique calculé à partir de mots-clés
-   pondérés selon leur enjeu pour les missions de Marion
-   (Responsable Innovation et Ingénierie Pédagogique — APFORM).
-   - URGENCE = pertinence + fraîcheur (un signal réglementaire vieux
-     de 2 mois est moins urgent que le même publié hier).
-   - IMPACT = pertinence seule (l'ampleur du sujet, indépendamment
-     du moment où on le lit).
-   Entièrement transparent et modifiable : ajustez les mots-clés
-   ou les poids ci-dessous selon vos priorités. Les valeurs restent
-   éditables ensuite dans le formulaire de sauvegarde.
-══════════════════════════════════════ */
-const RELEVANCE_KEYWORDS=[
-  [/qualiopi/i,3],[/audit/i,2],[/référentiel national qualité/i,3],
-  [/rncp|répertoire spécifique/i,2],[/nouvelle certification|nouveau titre|nouveau diplôme/i,3],
-  [/décret|arrêté|réforme|loi /i,3],[/obligatoire|à compter du|entrée en vigueur/i,2],
-  [/pénurie|tension de recrutement|manque de personnel/i,3],[/attractivité du métier|recrutement/i,2],
-  [/intelligence artificielle générative|agent ia|chatgpt|ia générative/i,2],
-  [/automatisation pédagogique|personnalisation des apprentissages/i,2],
-  [/financement|opco|minoration|prise en charge/i,2],
-  [/nouveau métier|évolution du métier|compétences émergentes/i,2],
-  [/fusion|rachat|partenariat stratégique/i,1],
-  [/innovation pédagogique|tendance|étude montre/i,1],
-];
-function relevanceScore(title,desc){
-  const txt=title+' '+desc;
-  return RELEVANCE_KEYWORDS.reduce((s,[re,w])=>s+(re.test(txt)?w*(re.test(title)?2:1):0),0);
-}
-function recencyBonus(dateStr){
-  if(!dateStr)return 0;
-  const days=(Date.now()-new Date(dateStr).getTime())/86400000;
-  if(days<=3)return 3; if(days<=7)return 1; return 0;
-}
-function computeUrgency(title,desc,dateStr){
-  const score=relevanceScore(title,desc)+recencyBonus(dateStr);
-  if(score>=9)return 'Haute'; if(score>=4)return 'Moyenne'; return 'Basse';
-}
-function computeImpact(title,desc){
-  const score=relevanceScore(title,desc);
-  if(score>=7)return 'Fort'; if(score>=3)return 'Moyen'; return 'Faible';
-}
-
-/* ══════════════════════════════════════
-   RÉSUMÉ EXTRACTIF (3 phrases max, sans IA)
-   Découpe la description RSS en phrases et n'en garde que 3,
-   avec un filet de sécurité sur la longueur totale.
-══════════════════════════════════════ */
-function extractSummary(desc){
-  if(!desc)return '';
-  const txt=desc.replace(/\s+/g,' ').trim();
-  const sentences=txt.match(/[^.!?]+[.!?]+/g)||[txt];
-  let out=sentences.slice(0,3).join(' ').trim();
-  if(out.length>320)out=out.slice(0,317).trimEnd()+'…';
-  return out;
-}
-
-/* ── Parsing XML RSS/Atom ── */
-function parseXML(xmlStr){
-  const parser=new DOMParser();
-  const doc=parser.parseFromString(xmlStr,'application/xml');
-  const items=[];
-  // RSS
-  doc.querySelectorAll('item').forEach(el=>{
-    const title=(el.querySelector('title')||{}).textContent||'';
-    const link=(el.querySelector('link')||{}).textContent||(el.querySelector('guid')||{}).textContent||'';
-    const desc=(el.querySelector('description')||{}).textContent||'';
-    const pubDate=(el.querySelector('pubDate')||{}).textContent||'';
-    items.push({title:title.trim(),link:link.trim(),desc:desc.replace(/<[^>]+>/g,'').trim().slice(0,600),date:pubDate?new Date(pubDate).toISOString().slice(0,10):''});
-  });
-  // Atom
-  if(!items.length){
-    doc.querySelectorAll('entry').forEach(el=>{
-      const title=(el.querySelector('title')||{}).textContent||'';
-      const linkEl=el.querySelector('link[rel="alternate"],link');
-      const link=linkEl?linkEl.getAttribute('href'):'';
-      const summary=(el.querySelector('summary')||el.querySelector('content')||{}).textContent||'';
-      const updated=(el.querySelector('updated')||el.querySelector('published')||{}).textContent||'';
-      items.push({title:title.trim(),link:link.trim(),desc:summary.replace(/<[^>]+>/g,'').trim().slice(0,600),date:updated?updated.slice(0,10):''});
-    });
-  }
-  return items.slice(0,6);
-}
-
-const PROXIES=[
-  u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
-  u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),
-  u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
-];
 
 async function loadOneFeed(feed){
-  for(let p=0;p<PROXIES.length;p++){
-    try{
-      const r=await fetch(PROXIES[p](feed.url),{signal:AbortSignal.timeout(9000)});
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      const text=await r.text();
-      const items=parseXML(text);
-      if(!items.length)throw new Error('Flux vide ou illisible');
-      return {ok:true,items:items.map(i=>{
-        const summary=extractSummary(i.desc);
-        const peri=classifyArticle(i.title,summary,feed.peri);
-        return {...i,desc:summary,source:feed.name,peri,urg:computeUrgency(i.title,summary,i.date),impact:computeImpact(i.title,summary)};
-      })};
-    }catch(e){
-      if(p===PROXIES.length-1)return {ok:false,items:[],error:e.message};
-      // échec : on tente le proxy de secours suivant
-    }
+  const api='https://api.rss2json.com/v1/api.json?rss_url=';
+  try{
+    const r=await fetch(api+encodeURIComponent(feed.url));
+    if(!r.ok) return [];
+    const d=await r.json();
+    if(d.status!=='ok') return [];
+    return (d.items||[]).slice(0,6).map(item=>({
+      title:(item.title||'').trim(),
+      link:(item.link||'').trim(),
+      date:item.pubDate?item.pubDate.slice(0,10):'',
+      desc:(item.description||item.content||'').replace(/<[^>]+>/g,'').trim().slice(0,200),
+      source:feed.name,
+      peri:feed.peri
+    }));
+  }catch(e){
+    return [];
   }
-  return {ok:false,items:[],error:'Échec'};
 }
 
-let feedStatus={};
-
-async function loadAllFeeds(feedsSubset){
-  const isRetry=Array.isArray(feedsSubset);
-  const list=isRetry?feedsSubset:RSS_FEEDS;
-  if(!isRetry){
-    if(fluxLoaded)return;
-    fluxLoaded=true;
-    allItems=[];
-    feedStatus={};
-  }
+async function loadAllFeeds(){
+  if(fluxLoaded)return;
+  fluxLoaded=true;
+  allItems=[];
   loadedCount=0;
   const container=document.getElementById('flux-container');
   const prog=document.getElementById('flux-progress');
   const progFill=document.getElementById('flux-progress-fill');
   const progLabel=document.getElementById('flux-progress-label');
   prog.style.display='block';
-  if(!isRetry)container.innerHTML='';
+  container.innerHTML='';
 
-  const total=list.length;
+  const total=RSS_FEEDS.length;
 
-  // Chargement séquentiel — un flux à la fois, avec proxy de secours par flux
-  for(let i=0;i<list.length;i++){
-    const feed=list[i];
-    const res=await loadOneFeed(feed);
-    feedStatus[feed.name]={ok:res.ok,peri:feed.peri};
-    if(res.ok){
-      allItems=allItems.filter(it=>it.source!==feed.name); // évite les doublons en cas de réessai
-      allItems.push(...res.items);
-    }
+  // Chargement séquentiel — un flux à la fois comme V18
+  for(let i=0;i<RSS_FEEDS.length;i++){
+    const items=await loadOneFeed(RSS_FEEDS[i]);
+    allItems.push(...items);
     loadedCount=i+1;
     const pct=Math.round(loadedCount/total*100);
     progFill.style.width=pct+'%';
-    progLabel.textContent=`Chargement… ${loadedCount}/${total} sources (${feed.name})`;
+    progLabel.textContent=`Chargement… ${loadedCount}/${total} sources (${RSS_FEEDS[i].name})`;
+    // Affichage progressif dès les premiers articles
     if(allItems.length>0) renderFlux(currentFilter);
   }
 
@@ -510,49 +367,15 @@ async function loadAllFeeds(feedsSubset){
   allItems.sort((a,b)=>b.date>a.date?1:-1);
   updateCounts();
   renderFlux(currentFilter);
-  renderFeedStatus();
-}
-
-function renderFeedStatus(){
-  const wrap=document.getElementById('flux-status-list');
-  if(!wrap)return;
-  const names=Object.keys(feedStatus);
-  const okCount=names.filter(n=>feedStatus[n].ok).length;
-  const nbFail=names.length-okCount;
-  document.getElementById('flux-status-summary').textContent=
-    nbFail===0?`✓ ${okCount}/${names.length} flux chargés avec succès.`
-    :`${okCount}/${names.length} flux chargés avec succès — ${nbFail} en échec (proxy ou site indisponible, pas un problème de données).`;
-  wrap.innerHTML=names.map(n=>{
-    const s=feedStatus[n];
-    return `<span style="display:inline-flex;align-items:center;margin:2px 6px 2px 0;font-size:11px">${n}<span class="${s.ok?'ok-tag':'error-tag'}">${s.ok?'✓ OK':'✗ Échec'}</span></span>`;
-  }).join('');
-  const failBtn=document.getElementById('btn-retry-failed');
-  if(failBtn){
-    failBtn.style.display=nbFail>0?'inline-flex':'none';
-    failBtn.innerHTML=`<i class="ti ti-refresh"></i> Réessayer les ${nbFail} flux en échec`;
-  }
-}
-
-function retryFailed(){
-  const failedNames=Object.keys(feedStatus).filter(n=>!feedStatus[n].ok);
-  const feeds=RSS_FEEDS.filter(f=>failedNames.includes(f.name));
-  if(feeds.length)loadAllFeeds(feeds);
 }
 
 function updateCounts(){
   const total=allItems.length;
-  const base=currentUrgFilter?allItems.filter(i=>i.urg===currentUrgFilter):allItems;
-  document.getElementById('cnt-all').textContent=base.length;
-  document.getElementById('cnt-vet').textContent=base.filter(i=>i.peri==='vet').length;
-  document.getElementById('cnt-reg').textContent=base.filter(i=>i.peri==='reg').length;
-  document.getElementById('cnt-ia').textContent=base.filter(i=>i.peri==='ia').length;
+  document.getElementById('cnt-all').textContent=total;
+  document.getElementById('cnt-vet').textContent=allItems.filter(i=>i.peri==='vet').length;
+  document.getElementById('cnt-reg').textContent=allItems.filter(i=>i.peri==='reg').length;
+  document.getElementById('cnt-ia').textContent=allItems.filter(i=>i.peri==='ia').length;
   document.getElementById('nb-flux').textContent=total;
-}
-
-function setUrgFilter(v){
-  currentUrgFilter=v;
-  updateCounts();
-  renderFlux(currentFilter);
 }
 
 function filterFlux(peri,btn){
@@ -564,17 +387,13 @@ function filterFlux(peri,btn){
 
 function renderFlux(peri){
   const container=document.getElementById('flux-container');
-  let items=peri?allItems.filter(i=>i.peri===peri):allItems;
-  if(currentUrgFilter)items=items.filter(i=>i.urg===currentUrgFilter);
+  const items=peri?allItems.filter(i=>i.peri===peri):allItems;
   if(!items.length){
     if(fluxLoaded&&loadedCount===RSS_FEEDS.length){
-      container.innerHTML=allItems.length
-        ?'<div class="empty">Aucun article ne correspond à ce filtre d\'urgence.</div>'
-        :'<div class="empty">Aucun article chargé. Vérifiez votre connexion internet.</div>';
+      container.innerHTML='<div class="empty">Aucun article chargé. Vérifiez votre connexion internet.</div>';
     }
     return;
   }
-  const savedUrls=new Set(articles.map(a=>a.url).filter(Boolean)); // détection des doublons par URL
   const groups={};
   items.forEach(i=>{if(!groups[i.peri])groups[i.peri]=[];groups[i.peri].push(i);});
   const order=['vet','reg','ia'];
@@ -591,20 +410,17 @@ function renderFlux(peri){
       const src=item.source.replace(/'/g,'&#39;');
       const u=item.link.replace(/'/g,'&#39;');
       const pl=PERI_LABEL[p].replace(/'/g,'&#39;');
-      const dsc=(item.desc||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,' ');
-      const isSaved=item.link&&savedUrls.has(item.link);
-      const saveBtn=isSaved
-        ?'<span class="status-badge s-done" style="font-size:11px;padding:3px 9px"><i class="ti ti-check"></i> Déjà enregistré</span>'
-        :`<button class="btn btn-primary" style="font-size:11px;padding:2px 9px" onclick="quickSave('${t}','${src}','${u}','${item.date}','${pl}','${dsc}','${item.urg}','${item.impact}')"><i class="ti ti-bookmark"></i> Sauvegarder</button>`;
       html+=`<div class="rss-item">
         <div class="rss-title"><a href="${item.link}" target="_blank" rel="noopener">${item.title}</a></div>
         ${item.desc?`<div class="rss-desc">${item.desc}</div>`:''}
         <div class="meta">
           <span class="pill ${PERI_CLASS[p]}">${PERI_LABEL[p]}</span>
-          ${urgP(item.urg)}
           <span>${item.source}</span>
           ${item.date?`<span>${item.date}</span>`:''}
-          ${saveBtn}
+          <button class="btn btn-primary" style="font-size:11px;padding:2px 9px"
+            onclick="quickSave('${t}','${src}','${u}','${item.date}','${pl}')">
+            <i class="ti ti-bookmark"></i> Sauvegarder
+          </button>
         </div>
       </div>`;
     });
@@ -613,7 +429,7 @@ function renderFlux(peri){
   container.innerHTML=html||'<div class="empty">Chargement en cours…</div>';
 }
 
-function quickSave(title,source,url,date,periLabel,desc,urg,impact){
+function quickSave(title,source,url,date,periLabel){
   document.getElementById('form-title').textContent='Sauvegarder cet article';
   document.getElementById('a-id').value='';
   document.getElementById('a-titre').value=title;
@@ -621,14 +437,11 @@ function quickSave(title,source,url,date,periLabel,desc,urg,impact){
   document.getElementById('a-url').value=url;
   document.getElementById('a-date').value=date||new Date().toISOString().slice(0,10);
   document.getElementById('a-peri').value=periLabel;
-  document.getElementById('a-resume').value=desc||'';
+  document.getElementById('a-resume').value='';
   document.getElementById('a-thema').value='';
-  document.getElementById('a-urg').value=urg||'';
-  document.getElementById('a-impact').value=impact||'';
+  document.getElementById('a-urg').value='';
+  document.getElementById('a-impact').value='';
   document.getElementById('a-stat').value='Nouveau';
-  document.getElementById('a-synth-intro').value=desc||'';
-  document.getElementById('a-synth-points').value='';
-  document.getElementById('a-synth-enjeux').value='';
   show('ajouter',document.querySelectorAll('.nav-btn')[3]);
   window.scrollTo(0,0);
 }
@@ -654,7 +467,7 @@ function show(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(btn&&btn.classList)btn.classList.add('active');
-  ({fil:renderFil,sources:renderSrc,linkedin:renderLI,export:renderExport,dashboard:renderDash,flux:()=>{if(fluxLoaded)renderFlux(currentFilter);}}[id]||function(){})();
+  ({fil:renderFil,sources:renderSrc,linkedin:renderLI,export:renderExport,dashboard:renderDash}[id]||function(){})();
 }
 
 /* ══════════════════════════════════════
@@ -691,7 +504,7 @@ function renderFil(){
   const list=articles.map((a,i)=>({...a,_i:i})).filter(a=>{if(fp&&a.peri!==fp)return false;if(fu&&a.urg!==fu)return false;if(fs&&a.stat!==fs)return false;return true;});
   const el=document.getElementById('fil-list');
   if(!list.length){el.innerHTML='<div class="empty">Aucun article sauvegardé. <a href="#" onclick="show(\'flux\',document.querySelectorAll(\'.nav-btn\')[1]);if(!fluxLoaded)loadAllFeeds();return false">Parcourez les flux →</a></div>';return;}
-  el.innerHTML=list.map(a=>`<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px"><div style="font-weight:500;font-size:14px;flex:1">${a.titre}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">${urgP(a.urg)}${a.impact?`<span style="font-size:11px;color:var(--text2)">Impact ${a.impact}</span>`:''}</div></div>${a.resume?`<div style="font-size:13px;color:var(--text2);margin-bottom:6px">${a.resume}</div>`:''}<div class="meta">${periP(a.peri)}${a.thema?`<span class="pill pill-g">${a.thema}</span>`:''}<span>${a.source}</span><span>${a.date}</span>${statP(a.stat)}${a.url?`<a href="${a.url}" target="_blank"><i class="ti ti-external-link"></i> Lire</a>`:''}</div>${(a.synthIntro||a.synthPoints||a.synthEnjeux)?`<div style="margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--radius);font-size:12px;line-height:1.5"><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:5px"><i class="ti ti-notes"></i> Synthèse stratégique</div>${a.synthIntro?`<div style="margin-bottom:4px"><strong>Intro :</strong> ${a.synthIntro}</div>`:''}${a.synthPoints?`<div style="margin-bottom:4px"><strong>Points clés :</strong><br>${a.synthPoints.replace(/\n/g,'<br>')}</div>`:''}${a.synthEnjeux?`<div><strong>Enjeux APFORM :</strong> ${a.synthEnjeux}</div>`:''}</div>`:''}<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn" style="font-size:12px;padding:3px 10px" onclick="editArticle(${a._i})"><i class="ti ti-edit"></i> Modifier</button><button class="btn btn-primary" style="font-size:12px;padding:3px 10px" onclick="generateWordDoc(${a._i})"><i class="ti ti-file-word"></i> Fiche Word</button><button class="btn btn-danger" style="font-size:12px;padding:3px 10px" onclick="deleteArticle(${a._i})"><i class="ti ti-trash"></i> Supprimer</button></div></div>`).join('');
+  el.innerHTML=list.map(a=>`<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px"><div style="font-weight:500;font-size:14px;flex:1">${a.titre}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">${urgP(a.urg)}${a.impact?`<span style="font-size:11px;color:var(--text2)">Impact ${a.impact}</span>`:''}</div></div>${a.resume?`<div style="font-size:13px;color:var(--text2);margin-bottom:6px">${a.resume}</div>`:''}<div class="meta">${periP(a.peri)}${a.thema?`<span class="pill pill-g">${a.thema}</span>`:''}<span>${a.source}</span><span>${a.date}</span>${statP(a.stat)}${a.url?`<a href="${a.url}" target="_blank"><i class="ti ti-external-link"></i> Lire</a>`:''}</div><div style="margin-top:8px;display:flex;gap:6px"><button class="btn" style="font-size:12px;padding:3px 10px" onclick="editArticle(${a._i})"><i class="ti ti-edit"></i> Modifier</button><button class="btn btn-danger" style="font-size:12px;padding:3px 10px" onclick="deleteArticle(${a._i})"><i class="ti ti-trash"></i> Supprimer</button></div></div>`).join('');
 }
 function resetFilters(){['f-peri','f-urg','f-stat'].forEach(id=>document.getElementById(id).value='');renderFil();}
 
@@ -701,7 +514,7 @@ function resetFilters(){['f-peri','f-urg','f-stat'].forEach(id=>document.getElem
 function saveArticle(){
   const t=document.getElementById('a-titre').value.trim(),d=document.getElementById('a-date').value,s=document.getElementById('a-source').value.trim(),p=document.getElementById('a-peri').value,u=document.getElementById('a-urg').value,msg=document.getElementById('a-msg');
   if(!t||!d||!s||!p||!u){msg.className='msg msg-err';msg.textContent='Merci de remplir les champs obligatoires (*)';return;}
-  const obj={titre:t,date:d,source:s,url:document.getElementById('a-url').value.trim(),resume:document.getElementById('a-resume').value.trim(),peri:p,thema:document.getElementById('a-thema').value,urg:u,impact:document.getElementById('a-impact').value,stat:document.getElementById('a-stat').value,synthIntro:document.getElementById('a-synth-intro').value.trim(),synthPoints:document.getElementById('a-synth-points').value.trim(),synthEnjeux:document.getElementById('a-synth-enjeux').value.trim()};
+  const obj={titre:t,date:d,source:s,url:document.getElementById('a-url').value.trim(),resume:document.getElementById('a-resume').value.trim(),peri:p,thema:document.getElementById('a-thema').value,urg:u,impact:document.getElementById('a-impact').value,stat:document.getElementById('a-stat').value};
   const eid=document.getElementById('a-id').value;
   if(eid!=='')articles[parseInt(eid)]=obj;else articles.unshift(obj);
   save();msg.className='msg msg-ok';msg.textContent='Article sauvegardé !';
@@ -710,8 +523,8 @@ function saveArticle(){
 function editArticle(i){
   const a=articles[i];
   document.getElementById('form-title').textContent='Modifier un article';
-  ['a-id','a-titre','a-date','a-source','a-url','a-resume','a-peri','a-thema','a-urg','a-impact','a-stat','a-synth-intro','a-synth-points','a-synth-enjeux'].forEach(id=>{
-    const key=id.replace('a-','');const map={id:i,titre:'titre',date:'date',source:'source',url:'url',resume:'resume',peri:'peri',thema:'thema',urg:'urg',impact:'impact',stat:'stat','synth-intro':'synthIntro','synth-points':'synthPoints','synth-enjeux':'synthEnjeux'};
+  ['a-id','a-titre','a-date','a-source','a-url','a-resume','a-peri','a-thema','a-urg','a-impact','a-stat'].forEach(id=>{
+    const key=id.replace('a-','');const map={id:i,titre:'titre',date:'date',source:'source',url:'url',resume:'resume',peri:'peri',thema:'thema',urg:'urg',impact:'impact',stat:'stat'};
     document.getElementById(id).value=id==='a-id'?i:(a[map[key]]||'');
   });
   show('ajouter',document.querySelectorAll('.nav-btn')[3]);window.scrollTo(0,0);
@@ -720,7 +533,7 @@ function deleteArticle(i){if(!confirm('Supprimer cet article ?'))return;articles
 function cancelEdit(){
   document.getElementById('form-title').textContent='Ajouter / modifier un article';
   document.getElementById('a-id').value='';
-  ['a-titre','a-source','a-url','a-resume','a-synth-intro','a-synth-points','a-synth-enjeux'].forEach(id=>document.getElementById(id).value='');
+  ['a-titre','a-source','a-url','a-resume'].forEach(id=>document.getElementById(id).value='');
   ['a-peri','a-thema','a-urg','a-impact'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('a-date').valueAsDate=new Date();
   document.getElementById('a-stat').value='Nouveau';
@@ -741,10 +554,19 @@ const SOURCES_VET=[
   {g:"Sites de référence",name:"SupVéto",url:"https://supveto.com",desc:"École vétérinaire — actus",prio:"Moyenne",rss:true},
   {g:"Sites de référence",name:"La Nurserie",url:"https://www.la-nurserie.com",desc:"Soins animaux",prio:"Moyenne",rss:true},
   {g:"Sites de référence",name:"Soutien Vétérinaire",url:"https://soutienveterinaire.fr",desc:"Ressources secteur vétérinaire",prio:"Moyenne",rss:true},
+  {g:"Interprofessionnel",name:"AINOA",url:"https://ainoa-asso.fr",desc:"Association interpro santé animale",prio:"Élevée",rss:true},
+  {g:"Interprofessionnel",name:"PortailEduc",url:"https://portaileduc.net/website",desc:"Portail pédagogique santé animale",prio:"Moyenne",rss:true},
   {g:"Institutionnel",name:"Ministère de l'Agriculture",url:"https://agriculture.gouv.fr",desc:"Publications, presse, réglementation",prio:"Élevée",rss:true},
   {g:"OPCO",name:"OPCO EP",url:"https://www.opcoep.fr",desc:"Financement formation vétérinaire",prio:"Élevée",rss:false},
-  {g:"Sites de référence",name:"La Dépêche Vétérinaire",url:"https://www.depecheveterinaire.com",desc:"Actualités vétérinaires — suivi manuel",prio:"Prioritaire",rss:false},
-  {g:"Interprofessionnel",name:"SNVEL — Vétérinaires libéraux",url:"https://www.veterinaireliberal.fr",desc:"Organisation des vétérinaires libéraux — suivi manuel",prio:"Élevée",rss:false},
+  {g:"Légifrance — Veille réglementaire vétérinaire",name:"Légifrance — Vétérinaire",url:"https://legifrss.org/latest?q=vétérinaire",desc:"Textes officiels — vétérinaire",prio:"Prioritaire",rss:true},
+  {g:"Légifrance — Veille réglementaire vétérinaire",name:"Légifrance — Santé animale",url:"https://legifrss.org/latest?q=santé animale",desc:"Textes officiels — santé animale",prio:"Prioritaire",rss:true},
+  {g:"Légifrance — Veille réglementaire vétérinaire",name:"Légifrance — Médecine vétérinaire",url:"https://legifrss.org/latest?q=médecine vétérinaire",desc:"Textes officiels — médecine vétérinaire",prio:"Prioritaire",rss:true},
+  {g:"Légifrance — Veille réglementaire vétérinaire",name:"Légifrance — Pharmacovigilance",url:"https://legifrss.org/latest?q=pharmacovigilance vétérinaire",desc:"Textes officiels — pharmacovigilance",prio:"Élevée",rss:true},
+  {g:"Légifrance — Veille réglementaire vétérinaire",name:"Légifrance — Médicament vétérinaire",url:"https://legifrss.org/latest?q=médicament vétérinaire",desc:"Textes officiels — médicament vétérinaire",prio:"Élevée",rss:true},
+  {g:"Légifrance — Veille réglementaire vétérinaire",name:"Légifrance — Bien-être animal",url:"https://legifrss.org/latest?q=bien-être animal",desc:"Textes officiels — bien-être animal",prio:"Élevée",rss:true},
+  {g:"Légifrance — Veille réglementaire vétérinaire",name:"Légifrance — Protection animale",url:"https://legifrss.org/latest?q=protection animale",desc:"Textes officiels — protection animale",prio:"Élevée",rss:true},
+  {g:"Légifrance — Veille réglementaire vétérinaire",name:"Légifrance — Élevage",url:"https://legifrss.org/latest?q=élevage",desc:"Textes officiels — élevage",prio:"Moyenne",rss:true},
+  {g:"Légifrance — Veille réglementaire vétérinaire",name:"Légifrance — Alimentation animale",url:"https://legifrss.org/latest?q=alimentation animale",desc:"Textes officiels — alimentation animale",prio:"Moyenne",rss:true},
 ];
 const SOURCES_REG=[
   {g:"Textes officiels",name:"France Compétences",url:"https://www.francecompetences.fr",desc:"RNCP, certifications, Qualiopi",prio:"Prioritaire",rss:true},
@@ -769,20 +591,14 @@ const SOURCES_IA=[
   {g:"Outils IA",name:"Towards Data Science",url:"https://towardsdatascience.com",desc:"IA, LLM, no-code",prio:"Moyenne",rss:true},
   {g:"Outils IA",name:"Articulate Blog",url:"https://articulate.com/blog",desc:"Storyline, Rise, IA conception",prio:"Élevée",rss:false},
   {g:"Outils IA",name:"IA Pédagogique",url:"https://www.iapedagogique.fr",desc:"IA appliquée à la formation",prio:"Élevée",rss:false},
-  {g:"Outils IA",name:"AXEM IA",url:"https://www.axem-ia.fr",desc:"Rendre l'IA simple, rentable et actionnable — suivi manuel",prio:"Élevée",rss:false},
-  {g:"Outils IA",name:"AppyLearny",url:"https://www.appylearny.fr/fr",desc:"Application mobile learning — suivi manuel",prio:"Moyenne",rss:false},
-  {g:"Associations professionnelles",name:"AINOA (ex-FFFOD)",url:"https://ainoa-asso.fr",desc:"Référence formation digitale & innovation pédagogique — tous secteurs",prio:"Élevée",rss:true},
-  {g:"Associations professionnelles",name:"PortailEduc",url:"https://portaileduc.net/website",desc:"Ressources numérique éducatif, TICE, IA pédagogique — tous secteurs",prio:"Moyenne",rss:true},
-  {g:"Blogs & magazines",name:"La Fabrique à Neurones",url:"https://www.lafabriqueaneurones.com",desc:"Neurosciences & pédagogie",prio:"Élevée",rss:true},
-  {g:"Podcasts",name:"Rendez-vous en terre digitale",url:"https://www.rdventerredigitale.com",desc:"Podcast digital learning — suivi manuel",prio:"Élevée",rss:false},
 ];
 const LINKEDIN=[
   {name:"APFORM",role:"Page officielle",peri:"Secteur vétérinaire / ASV",prio:"Prioritaire",url:"https://www.linkedin.com/company/apform"},
   {name:"SNVEL",role:"Syndicat National Vétérinaire",peri:"Secteur vétérinaire / ASV",prio:"Prioritaire",url:"https://www.linkedin.com/company/snvel"},
-  {name:"Ordre National des Vétérinaires",role:"Réglementation et déontologie",peri:"Secteur vétérinaire / ASV",prio:"Élevée",url:"https://www.linkedin.com/company/ordre-national-des-veterinaires/posts/?feedView=all"},
+  {name:"Ordre National des Vétérinaires",role:"Réglementation et déontologie",peri:"Secteur vétérinaire / ASV",prio:"Élevée",url:"https://www.linkedin.com/company/ordre-national-des-veterinaires"},
   {name:"OPCO EP",role:"Financement alternance vétérinaire",peri:"Secteur vétérinaire / ASV",prio:"Élevée",url:"https://www.linkedin.com/company/opcoep"},
   {name:"France Compétences",role:"Certification, Qualiopi, RNCP",peri:"Réglementation / Qualiopi",prio:"Prioritaire",url:"https://www.linkedin.com/company/france-competences"},
-  {name:"Centre Inffo",role:"Veille réglementaire formation",peri:"Réglementation / Qualiopi",prio:"Prioritaire",url:"https://www.linkedin.com/company/centre-inffo/posts/?feedView=all"},
+  {name:"Centre Inffo",role:"Veille réglementaire formation",peri:"Réglementation / Qualiopi",prio:"Prioritaire",url:"https://www.linkedin.com/company/centre-inffo"},
   {name:"Les Acteurs de la Compétence",role:"Fédération OF — Qualiopi",peri:"Réglementation / Qualiopi",prio:"Prioritaire",url:"https://www.linkedin.com/company/les-acteurs-de-la-competence"},
   {name:"Ministère du Travail",role:"Formation professionnelle, alternance",peri:"Réglementation / Qualiopi",prio:"Élevée",url:"https://www.linkedin.com/company/ministere-du-travail-de-france"},
   {name:"Digiforma",role:"Logiciel OF, Qualiopi",peri:"Réglementation / Qualiopi",prio:"Élevée",url:"https://www.linkedin.com/company/digiforma"},
@@ -794,16 +610,11 @@ const LINKEDIN=[
   {name:"eLearning Industry",role:"Tendances e-learning & IA",peri:"Innovation pédagogique & IA",prio:"Élevée",url:"https://www.linkedin.com/company/elearning-industry"},
   {name:"Thot Cursus",role:"Innovation pédagogique francophone",peri:"Innovation pédagogique & IA",prio:"Élevée",url:"https://www.linkedin.com/company/thot-cursus"},
   {name:"Articulate",role:"Storyline, Rise, outils auteur",peri:"Innovation pédagogique & IA",prio:"Moyenne",url:"https://www.linkedin.com/company/articulate"},
-  {name:"Alexis Zeitoun",role:"Contact professionnel",peri:"Innovation pédagogique & IA",prio:"Moyenne",url:"https://www.linkedin.com/in/alexiszeitoun/"},
-  {name:"Ulriche Edah",role:"Contact professionnel",peri:"Innovation pédagogique & IA",prio:"Moyenne",url:"https://www.linkedin.com/in/ulriche-edah/"},
-  {name:"Noé Porchier-Cizaire",role:"Contact professionnel",peri:"Innovation pédagogique & IA",prio:"Moyenne",url:"https://www.linkedin.com/in/noe-porchiercizaire/"},
-  {name:"Loïc Pellicano",role:"Contact professionnel",peri:"Innovation pédagogique & IA",prio:"Moyenne",url:"https://www.linkedin.com/in/loic-pellicano/"},
-  {name:"Yvan Demumieux",role:"Contact professionnel",peri:"Innovation pédagogique & IA",prio:"Moyenne",url:"https://www.linkedin.com/in/yvan-demumieux/"},
 ];
 
 function srcItem(s){
   const pc=s.prio==='Prioritaire'?'pill-h':s.prio==='Élevée'?'pill-m':'pill-g';
-  const rss=s.rss?'<span style="font-size:10px;color:var(--success-text);margin-left:4px">● RSS auto</span>':'<span style="font-size:10px;color:var(--text3);margin-left:4px">👁 Suivi manuel</span>';
+  const rss=s.rss?'<span style="font-size:10px;color:var(--success-text);margin-left:4px">● RSS</span>':'';
   return `<div class="source-item"><div><div style="font-size:13px;font-weight:500">${s.name}${rss}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${s.desc}</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><span class="pill ${pc}">${s.prio}</span><a href="${s.url}" target="_blank" style="font-size:12px;white-space:nowrap"><i class="ti ti-external-link"></i> Ouvrir</a></div></div>`;
 }
 function renderSrc(){
@@ -812,21 +623,6 @@ function renderSrc(){
   document.getElementById('src-reg').innerHTML=byGroup(SOURCES_REG);
   document.getElementById('src-ia').innerHTML=byGroup(SOURCES_IA);
 }
-function updateRefCounts(){
-  const allSrc=[...SOURCES_VET,...SOURCES_REG,...SOURCES_IA];
-  const ids={
-    'nb-sources':allSrc.length,
-    'src-total-count':allSrc.length,
-    'src-rss-count':RSS_FEEDS.length,
-    'nb-flux':RSS_FEEDS.length,
-    'st-rss-count':RSS_FEEDS.length,
-    'flux-rss-count':RSS_FEEDS.length,
-    'nb-linkedin':LINKEDIN.length,
-    'li-total-count':LINKEDIN.length,
-    'li-prio-count':LINKEDIN.filter(l=>l.prio==='Prioritaire').length,
-  };
-  Object.entries(ids).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.textContent=val;});
-}
 function renderLI(){
   const fp=document.getElementById('li-peri').value,pp=document.getElementById('li-prio').value;
   const list=LINKEDIN.filter(l=>{if(fp&&l.peri!==fp)return false;if(pp&&l.prio!==pp)return false;return true;});
@@ -834,262 +630,22 @@ function renderLI(){
   const pe2={'Secteur vétérinaire / ASV':'pill-v','Réglementation / Qualiopi':'pill-r','Innovation pédagogique & IA':'pill-i'};
   document.getElementById('li-list').innerHTML=list.length?list.map(l=>`<div class="li-item"><div><div style="font-weight:500;font-size:13px">${l.name}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${l.role}</div><div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:4px"><span class="pill ${pe2[l.peri]}">${l.peri}</span><span class="pill ${pc2[l.prio]}">${l.prio}</span></div></div><a href="${l.url}" target="_blank" style="font-size:12px;flex-shrink:0;margin-top:2px;white-space:nowrap"><i class="ti ti-external-link"></i> Suivre</a></div>`).join(''):'<div class="empty">Aucun résultat.</div>';
 }
-function getExportFiltered(){
-  const df=document.getElementById('exp-date-debut').value;
-  const dt=document.getElementById('exp-date-fin').value;
-  return articles.filter(a=>{
-    if(df&&a.date<df)return false; // comparaison lexicographique valide car dates au format ISO AAAA-MM-JJ
-    if(dt&&a.date>dt)return false;
-    return true;
-  });
-}
-function resetExportFilters(){
-  document.getElementById('exp-date-debut').value='';
-  document.getElementById('exp-date-fin').value='';
-  renderExport();
-}
 function renderExport(){
   const tb=document.getElementById('exp-body');
-  const list=getExportFiltered();
-  const df=document.getElementById('exp-date-debut').value,dt=document.getElementById('exp-date-fin').value;
-  document.getElementById('exp-count').textContent=articles.length?`${list.length} article(s)${(df||dt)?' sur la période sélectionnée':''} sur ${articles.length} au total`:'';
-  if(!list.length){tb.innerHTML=`<tr><td colspan="8" class="empty" style="padding:1rem">${articles.length?'Aucun article sur cette période.':'Aucun article sauvegardé.'}</td></tr>`;return;}
-  tb.innerHTML=list.map(a=>`<tr><td>${a.date}</td><td>${a.titre}</td><td>${a.source}</td><td>${a.peri}</td><td>${a.thema||''}</td><td>${a.impact||''}</td><td>${a.urg}</td><td>${a.stat}</td></tr>`).join('');
+  if(!articles.length){tb.innerHTML='<tr><td colspan="8" class="empty" style="padding:1rem">Aucun article sauvegardé.</td></tr>';return;}
+  tb.innerHTML=articles.map(a=>`<tr><td>${a.date}</td><td>${a.titre}</td><td>${a.source}</td><td>${a.peri}</td><td>${a.thema||''}</td><td>${a.impact||''}</td><td>${a.urg}</td><td>${a.stat}</td></tr>`).join('');
 }
 function exportCSV(){
-  const list=getExportFiltered();
-  const df=document.getElementById('exp-date-debut').value,dt=document.getElementById('exp-date-fin').value;
-  const h=['Date','Titre','Source','URL','Périmètre','Thématique','Impact','Urgence','Statut','Synthèse intro','Synthèse points clés','Enjeux APFORM'];
-  const rows=list.map(a=>[a.date,a.titre,a.source,a.url||'',a.peri,a.thema||'',a.impact||'',a.urg,a.stat,a.synthIntro||'',a.synthPoints||'',a.synthEnjeux||''].map(v=>`"${(v+'').replace(/"/g,'""')}"`).join(','));
+  const h=['Date','Titre','Source','URL','Périmètre','Thématique','Impact','Urgence','Statut'];
+  const rows=articles.map(a=>[a.date,a.titre,a.source,a.url||'',a.peri,a.thema||'',a.impact||'',a.urg,a.stat].map(v=>`"${(v+'').replace(/"/g,'""')}"`).join(','));
   const blob=new Blob(['\uFEFF'+[h.join(','),...rows].join('\n')],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  const suffix=(df||dt)?`_${df||'debut'}_${dt||'fin'}`:'';
-  a.download='veille-apform'+suffix+'-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
-}
-
-/* ══════════════════════════════════════
-   FICHE DE SYNTHÈSE WORD (.doc, ouverture native dans Word)
-   Génération 100% locale (HTML habillé en document Word),
-   aucune dépendance externe — fonctionne hors ligne.
-══════════════════════════════════════ */
-function generateWordDoc(i){
-  const a=articles[i];
-  if(!a)return;
-  const esc=s=>(s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const html=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-<head><meta charset="utf-8"><title>${esc(a.titre)}</title>
-<style>
-  body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#1a1a18}
-  h1{font-size:16pt;color:#185fa5;border-bottom:2px solid #185fa5;padding-bottom:6px;margin-bottom:14px}
-  .meta{font-size:9pt;color:#6b6a65;margin-bottom:18px}
-  .meta span{margin-right:16px}
-  h2{font-size:12pt;color:#185fa5;margin-top:18px;margin-bottom:6px}
-  p{line-height:1.5}
-  .footer{margin-top:30px;font-size:8pt;color:#9b9a94;border-top:1px solid #ddd;padding-top:8px}
-</style></head>
-<body>
-  <h1>${esc(a.titre)}</h1>
-  <div class="meta"><span><b>Source :</b> ${esc(a.source)}</span><span><b>Date :</b> ${esc(a.date)}</span><span><b>Périmètre :</b> ${esc(PERI_LABEL[a.peri]||a.peri)}</span><span><b>Urgence :</b> ${esc(a.urg)}</span><span><b>Impact :</b> ${esc(a.impact||'—')}</span></div>
-  ${a.url?`<p><b>Lien :</b> <a href="${esc(a.url)}">${esc(a.url)}</a></p>`:''}
-  <h2>Résumé</h2><p>${esc(a.resume)||'—'}</p>
-  <h2>Introduction</h2><p>${esc(a.synthIntro)||'—'}</p>
-  <h2>Points principaux</h2><p>${(esc(a.synthPoints)||'—').replace(/\n/g,'<br>')}</p>
-  <h2>Enjeux pour APFORM</h2><p>${esc(a.synthEnjeux)||'—'}</p>
-  <div class="footer">Fiche générée automatiquement — Portail de Veille APFORM — ${new Date().toLocaleDateString('fr-FR')}</div>
-</body></html>`;
-  const blob=new Blob(['\ufeff'+html],{type:'application/msword'});
-  const link=document.createElement('a');
-  link.href=URL.createObjectURL(blob);
-  const safeName=(a.titre||'article').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w\s-]/g,'').trim().slice(0,60).replace(/\s+/g,'-');
-  link.download=`fiche-synthese-${safeName||'article'}.doc`;
-  link.click();
-}
-
-
-/* ══════════════════════════════════════
-   EXPORT NOTEBOOKLM
-   Génère un fichier texte structuré :
-   - SOURCES PRIORITAIRES = articles sauvegardés (favoris)
-   - SOURCES CONTEXTUELLES = tous les articles remontés par flux RSS
-   Organisé par catégorie + prompt suggéré pour NotebookLM
-══════════════════════════════════════ */
-function exportNotebookLM(){
-  const catFilter=document.getElementById('nlm-cat-filter').value;
-  const PERI_NAMES={
-    'vet':'Secteur vétérinaire / ASV',
-    'reg':'Réglementation & Formation professionnelle',
-    'ia':'Innovation pédagogique & Intelligence artificielle'
-  };
-  const PERIS=catFilter?[catFilter]:['vet','reg','ia'];
-  const today=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
-  const lines=[];
-
-  const catLabel=catFilter?(' — '+{vet:'Secteur vétérinaire',reg:'Réglementation & Formation',ia:'Innovation pédagogique & IA'}[catFilter]):'';
-  lines.push('# VEILLE STRATÉGIQUE APFORM — Export NotebookLM' + catLabel);
-  lines.push('# Généré le ' + today);
-  lines.push('# ─────────────────────────────────────────────────────────────────');
-  lines.push("# MODE D'EMPLOI :");
-  lines.push('#   1. Copiez ce fichier entier');
-  lines.push('#   2. Dans NotebookLM > Ajouter une source > Texte copié');
-  lines.push('#   3. Utilisez le prompt suggéré en bas de ce fichier');
-  lines.push('# ─────────────────────────────────────────────────────────────────');
-  lines.push('');
-
-  // ── BLOC 1 : SOURCES PRIORITAIRES (articles sauvegardés) ──
-  lines.push('═══════════════════════════════════════════════════════════════════');
-  lines.push('SOURCES PRIORITAIRES — Articles sélectionnés et sauvegardés');
-  lines.push('⚑ Appuyez votre analyse principalement sur ces sources');
-  lines.push('═══════════════════════════════════════════════════════════════════');
-  lines.push('');
-
-  if(!articles.length){
-    lines.push('(Aucun article sauvegardé — utilisez le bouton "Sauvegarder" dans les flux)');
-    lines.push('');
-  } else {
-    PERIS.forEach(p=>{
-      const arts=articles.filter(a=>(a.peri===p||a.peri===PERI_NAMES[p]));
-      if(!arts.length)return;
-      lines.push('── ' + PERI_NAMES[p].toUpperCase() + ' ──');
-      arts.forEach(a=>{
-        lines.push('• ' + (a.titre||'(sans titre)'));
-        lines.push('  Source : ' + (a.source||'—') + '  |  Date : ' + (a.date||'—') + '  |  Urgence : ' + (a.urg||'—'));
-        if(a.url) lines.push('  URL : ' + a.url);
-        if(a.synthIntro) lines.push('  Résumé : ' + a.synthIntro.slice(0,200));
-        lines.push('');
-      });
-    });
-  }
-
-  // ── BLOC 2 : SOURCES CONTEXTUELLES (flux RSS) ──
-  lines.push('═══════════════════════════════════════════════════════════════════');
-  lines.push('SOURCES CONTEXTUELLES — Tous les articles remontés par les flux RSS');
-  lines.push('ℹ Utilisez ces sources pour enrichir le contexte et identifier les tendances');
-  lines.push('═══════════════════════════════════════════════════════════════════');
-  lines.push('');
-
-  if(!allItems||!allItems.length){
-    lines.push('(Aucun article chargé — cliquez sur "Actualiser les flux" depuis l\'onglet Flux RSS)');
-    lines.push('');
-  } else {
-    PERIS.forEach(p=>{
-      const items=allItems.filter(i=>i.peri===p);
-      if(!items.length)return;
-      lines.push('── ' + PERI_NAMES[p].toUpperCase() + ' ──');
-      items.forEach(i=>{
-        lines.push('• ' + (i.title||i.titre||'(sans titre)'));
-        lines.push('  Source : ' + (i.source||'—') + '  |  Date : ' + (i.date||'—'));
-        if(i.link) lines.push('  URL : ' + i.link);
-        if(i.desc) lines.push('  Extrait : ' + i.desc.slice(0,150) + '...');
-        lines.push('');
-      });
-    });
-  }
-
-  // ── BLOC 3 : PROMPT SUGGÉRÉ ──
-  const nbFav=catFilter?articles.filter(a=>a.peri===catFilter||a.peri===PERI_NAMES[catFilter]).length:articles.length;
-  const nbTotal=catFilter?(allItems||[]).filter(i=>i.peri===catFilter).length:(allItems&&allItems.length)||0;
-  lines.push('═══════════════════════════════════════════════════════════════════');
-  lines.push('PROMPT SUGGÉRÉ POUR NOTEBOOKLM');
-  lines.push('═══════════════════════════════════════════════════════════════════');
-  lines.push('');
-  lines.push('Copiez-collez ce prompt dans la zone de chat de NotebookLM :');
-  lines.push('');
-  lines.push('---');
-  lines.push('Tu es un expert en veille stratégique pour APFORM, organisme de formation');
-  lines.push('certifié Qualiopi spécialisé dans la formation des Auxiliaires Spécialisés');
-  lines.push('Vétérinaires (ASV) et des équipes vétérinaires.');
-  lines.push('');
-  lines.push('Ce document contient ' + nbFav + ' article(s) sauvegardé(s) comme PRIORITAIRES');
-  lines.push('et ' + nbTotal + ' article(s) de contexte issus des flux de veille.');
-  lines.push('');
-  lines.push('En t\'appuyant principalement sur les SOURCES PRIORITAIRES et en utilisant');
-  lines.push('les SOURCES CONTEXTUELLES pour les tendances de fond, rédige :');
-  lines.push('');
-  const catSuffix=catFilter?(' sur l\'axe '+{vet:'vétérinaire & ASV',reg:'réglementation & formation',ia:'innovation pédagogique & IA'}[catFilter]):'';
-  lines.push('1. SYNTHÈSE EXÉCUTIVE (5 lignes max)');
-  lines.push('   Les faits marquants de cette période pour APFORM' + catSuffix + '.');
-  lines.push('');
-  // Axe(s) adapté(s) au filtre sélectionné
-  if(!catFilter){
-    lines.push('2. ANALYSE PAR AXE');
-    lines.push('   - Secteur vétérinaire : évolutions clés, signaux faibles');
-    lines.push('   - Formation professionnelle : réglementaire, Qualiopi, financement');
-    lines.push('   - Innovation pédagogique & IA : tendances, outils, pratiques');
-  } else if(catFilter==='vet'){
-    lines.push('2. ANALYSE SECTORIELLE — Secteur vétérinaire & ASV');
-    lines.push('   - Évolutions du marché et des pratiques vétérinaires');
-    lines.push('   - Évolutions des métiers ASV et des compétences associées');
-    lines.push('   - Signaux faibles : recrutement, délégation d\'actes, bien-être animal, télémédecine');
-  } else if(catFilter==='reg'){
-    lines.push('2. ANALYSE RÉGLEMENTAIRE & FORMATION');
-    lines.push('   - Évolutions Qualiopi, France Compétences, RNCP');
-    lines.push('   - Financement de la formation : CPF, OPCO, alternance');
-    lines.push('   - Points de vigilance pour la certification APFORM');
-  } else if(catFilter==='ia'){
-    lines.push('2. ANALYSE INNOVATION PÉDAGOGIQUE & IA');
-    lines.push('   - Nouvelles pratiques et outils pédagogiques');
-    lines.push('   - Usages de l\'IA dans la formation professionnelle');
-    lines.push('   - Ce qui est déployable maintenant vs expérimental');
-  }
-  lines.push('');
-  lines.push('3. OPPORTUNITÉS POUR APFORM');
-  lines.push('   Nouvelles formations possibles, partenariats, positionnements.');
-  lines.push('');
-  lines.push('4. RISQUES & POINTS DE VIGILANCE');
-  lines.push('   Menaces réglementaires, concurrentielles ou sectorielles.');
-  lines.push('');
-  lines.push('5. RECOMMANDATIONS PRIORITAIRES (3 actions concrètes max)');
-  lines.push('---');
-  lines.push('');
-  lines.push('# ─────────────────────────────────────────────────────────────────');
-  lines.push('# Fin de l\'export — Portail de Veille APFORM — ' + today);
-
-  const content=lines.join('\n');
-  document.getElementById('nlm-content').value=content;
-  document.getElementById('nlm-modal').style.display='flex';
-}
-
-function copyNLM(){
-  const ta=document.getElementById('nlm-content');
-  ta.select();
-  document.execCommand('copy');
-  const ok=document.getElementById('nlm-copy-ok');
-  ok.style.display='inline';
-  setTimeout(()=>ok.style.display='none',2000);
-}
-
-function downloadNLM(){
-  const content=document.getElementById('nlm-content').value;
-  const blob=new Blob(['\uFEFF'+content],{type:'text/plain;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='veille-apform-notebooklm-'+new Date().toISOString().slice(0,10)+'.txt';
-  a.click();
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='veille-apform-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 }
 
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-load();renderDash();renderSrc();renderLI();updateRefCounts();cancelEdit();
+load();renderDash();renderSrc();renderLI();cancelEdit();
 </script>
-
-<!-- MODAL NOTEBOOKLM -->
-<div id="nlm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;align-items:center;justify-content:center">
-  <div style="background:var(--card);border-radius:10px;width:min(700px,92vw);max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.3)">
-    <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <div style="font-weight:600;font-size:14px"><i class="ti ti-brain"></i> Export NotebookLM structuré</div>
-      <button class="btn" onclick="document.getElementById('nlm-modal').style.display='none'" style="padding:2px 10px">✕</button>
-    </div>
-    <div style="padding:.75rem 1.25rem;font-size:12px;color:var(--text2);background:var(--bg);border-bottom:1px solid var(--border)">
-      Copiez ce texte, puis collez-le comme <strong>source texte</strong> dans NotebookLM. Les articles favoris sont marqués comme prioritaires dans le prompt suggéré.
-    </div>
-    <textarea id="nlm-content" style="flex:1;resize:none;border:none;padding:1rem;font-family:monospace;font-size:11px;background:var(--bg);color:var(--text1);outline:none;overflow-y:auto"></textarea>
-    <div style="padding:.75rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:8px">
-      <button class="btn btn-primary" onclick="copyNLM()"><i class="ti ti-copy"></i> Copier</button>
-      <button class="btn" onclick="downloadNLM()"><i class="ti ti-download"></i> Télécharger .txt</button>
-      <span id="nlm-copy-ok" style="font-size:12px;color:green;align-self:center;display:none">✓ Copié !</span>
-    </div>
-  </div>
-</div>
 </body>
 </html>
