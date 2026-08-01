@@ -319,8 +319,11 @@ let loadedCount=0;
 
 async function loadOneFeed(feed){
   const api='https://api.rss2json.com/v1/api.json?rss_url=';
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),8000);
   try{
-    const r=await fetch(api+encodeURIComponent(feed.url));
+    const r=await fetch(api+encodeURIComponent(feed.url),{signal:controller.signal});
+    clearTimeout(timer);
     if(!r.ok) return [];
     const d=await r.json();
     if(d.status!=='ok') return [];
@@ -333,6 +336,7 @@ async function loadOneFeed(feed){
       peri:feed.peri
     }));
   }catch(e){
+    clearTimeout(timer);
     return [];
   }
 }
@@ -342,25 +346,24 @@ async function loadAllFeeds(){
   fluxLoaded=true;
   allItems=[];
   loadedCount=0;
-  const container=document.getElementById('flux-container');
   const prog=document.getElementById('flux-progress');
   const progFill=document.getElementById('flux-progress-fill');
   const progLabel=document.getElementById('flux-progress-label');
   prog.style.display='block';
-  container.innerHTML='';
+  document.getElementById('flux-container').innerHTML='';
 
   const total=RSS_FEEDS.length;
 
-  // Chargement séquentiel — un flux à la fois comme V18
-  for(let i=0;i<RSS_FEEDS.length;i++){
-    const items=await loadOneFeed(RSS_FEEDS[i]);
-    allItems.push(...items);
-    loadedCount=i+1;
-    const pct=Math.round(loadedCount/total*100);
-    progFill.style.width=pct+'%';
-    progLabel.textContent=`Chargement… ${loadedCount}/${total} sources (${RSS_FEEDS[i].name})`;
-    // Affichage progressif dès les premiers articles
-    if(allItems.length>0) renderFlux(currentFilter);
+  // Chargement par batch de 5 en parallèle — rapide et robuste
+  const batchSize=5;
+  for(let i=0;i<RSS_FEEDS.length;i+=batchSize){
+    const batch=RSS_FEEDS.slice(i,i+batchSize);
+    const results=await Promise.allSettled(batch.map(f=>loadOneFeed(f)));
+    results.forEach(r=>{if(r.status==='fulfilled')allItems.push(...r.value);});
+    loadedCount=Math.min(i+batchSize,total);
+    progFill.style.width=Math.round(loadedCount/total*100)+'%';
+    progLabel.textContent=`Chargement… ${loadedCount}/${total} sources`;
+    if(allItems.length>0)renderFlux(currentFilter);
   }
 
   prog.style.display='none';
@@ -439,11 +442,12 @@ function quickSave(title,source,url,date,periLabel){
   document.getElementById('a-peri').value=periLabel;
   document.getElementById('a-resume').value='';
   document.getElementById('a-thema').value='';
-  document.getElementById('a-urg').value='';
-  document.getElementById('a-impact').value='';
+  document.getElementById('a-urg').value='Moyenne'; // valeur par défaut modifiable
+  document.getElementById('a-impact').value='Moyen';
   document.getElementById('a-stat').value='Nouveau';
   show('ajouter',document.querySelectorAll('.nav-btn')[3]);
-  window.scrollTo(0,0);
+  // Scroll vers le champ urgence pour que Marion le voie et l'ajuste
+  setTimeout(()=>{document.getElementById('a-urg').scrollIntoView({behavior:'smooth',block:'center'});},300);
 }
 
 /* ══════════════════════════════════════
