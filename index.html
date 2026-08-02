@@ -349,8 +349,10 @@ function getStaleCache(feed){
   }catch(e){return null;}
 }
 
+function sleep(ms){return new Promise(res=>setTimeout(res,ms));}
+
 /* ══════ FETCH ══════ */
-async function loadOneFeed(feed){
+async function loadOneFeed(feed,isRetry){
   const cached=getCache(feed);
   if(cached)return cached;
   const api='https://api.rss2json.com/v1/api.json?rss_url=';
@@ -360,6 +362,11 @@ async function loadOneFeed(feed){
   try{
     const r=await fetch(api+encodeURIComponent(feed.url)+keyParam,{signal:ctrl.signal});
     clearTimeout(t);
+    if(r.status===429&&!isRetry){
+      // Trop de requêtes trop vite : on patiente puis on retente une fois
+      await sleep(3000);
+      return loadOneFeed(feed,true);
+    }
     if(!r.ok){
       failedFeeds.push({name:feed.name,peri:feed.peri,reason:'HTTP '+r.status});
       const stale=getStaleCache(feed);
@@ -400,8 +407,9 @@ async function loadAllFeeds(){
   prog.style.display='block';
   document.getElementById('flux-container').innerHTML='';
   const total=RSS_FEEDS.length;
-  // Batch de 4 en parallèle
-  const batch=4;
+  // Lots de 2 en parallèle, avec pause entre chaque lot pour respecter le quota rss2json
+  const batch=2;
+  const pauseMs=800;
   for(let i=0;i<total;i+=batch){
     const slice=RSS_FEEDS.slice(i,i+batch);
     const results=await Promise.allSettled(slice.map(f=>loadOneFeed(f)));
@@ -409,6 +417,7 @@ async function loadAllFeeds(){
     progFill.style.width=Math.round(Math.min(i+batch,total)/total*100)+'%';
     progLabel.textContent='Chargement… '+Math.min(i+batch,total)+'/'+total+' sources';
     renderFlux(currentFilter);
+    if(i+batch<total)await sleep(pauseMs);
   }
   prog.style.display='none';
   allItems.sort((a,b)=>b.date>a.date?1:-1);
