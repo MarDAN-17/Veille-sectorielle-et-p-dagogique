@@ -128,7 +128,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
     <div id="dash-peri"><div class="empty">Sauvegardez vos premiers articles depuis les flux automatiques.</div></div>
   </div>
   <div class="card">
-    <div style="font-size:14px;font-weight:500;margin-bottom:.75rem">Urgences à traiter</div>
+    <div style="font-size:14px;font-weight:500;margin-bottom:.75rem">Urgences à traiter <span style="font-weight:400;color:var(--text2);font-size:12px">(Haute & Moyenne)</span></div>
     <div id="dash-urgences"><div class="empty">Aucune urgence. <a href="#" onclick="show('flux',document.querySelectorAll('.nav-btn')[1]);if(!fluxLoaded)loadAllFeeds();return false">Parcourez les flux →</a></div></div>
   </div>
   <div class="notice"><i class="ti ti-clock"></i><span>Rythme recommandé : 30–45 min/semaine · <strong>Lundi</strong> : parcourir les flux · <strong>Jeudi</strong> : sauvegarder les pertinents + export Qualiopi</span></div>
@@ -142,6 +142,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
     <div style="font-size:12px;color:var(--text2);margin-bottom:6px" id="flux-progress-label">Chargement…</div>
     <div class="progress-bar"><div class="progress-fill" id="flux-progress-fill" style="width:0%"></div></div>
   </div>
+  <div id="flux-diagnostics" style="display:none;margin-bottom:1rem"></div>
   <div class="tab-bar">
     <button class="tab-btn active" onclick="filterFlux('',this)">Tous <span id="cnt-all" class="badge">0</span></button>
     <button class="tab-btn" onclick="filterFlux('vet',this)"><span class="pill pill-v">Vétérinaire</span> <span id="cnt-vet" class="badge">0</span></button>
@@ -313,22 +314,64 @@ const RSS_FEEDS=[
 const PERI_LABEL={vet:"Secteur vétérinaire / ASV",reg:"Réglementation / Qualiopi",ia:"Innovation pédagogique & IA"};
 const PERI_CLASS={vet:"pill-v",reg:"pill-r",ia:"pill-i"};
 
+/* ══════ CONFIG RSS2JSON ══════
+   1. Crée un compte gratuit sur https://rss2json.com/ (bouton "Get Your API Key")
+   2. Colle ta clé ci-dessous entre les guillemets
+   Sans clé : quota anonyme très bas → les flux en fin de liste (Qualiopi, IA) échouent silencieusement.
+   Avec clé gratuite : 10 000 requêtes/jour, largement suffisant pour 66 flux. */
+const RSS2JSON_API_KEY="m3bh1uwyao83ewcyiwjleu82z5emozw0vs7hcwgb";
+
+const CACHE_TTL_MS=45*60*1000; // 45 min : évite de re-solliciter l'API à chaque visite
+const CACHE_PREFIX="veille_cache_";
+
 let allItems=[];
 let fluxLoaded=false;
 let currentFilter='';
+let failedFeeds=[]; // {name, peri, reason}
+
+function getCache(feed){
+  try{
+    const raw=localStorage.getItem(CACHE_PREFIX+feed.url);
+    if(!raw)return null;
+    const parsed=JSON.parse(raw);
+    if(Date.now()-parsed.ts>CACHE_TTL_MS)return null;
+    return parsed.items;
+  }catch(e){return null;}
+}
+function setCache(feed,items){
+  try{localStorage.setItem(CACHE_PREFIX+feed.url,JSON.stringify({ts:Date.now(),items}));}catch(e){}
+}
+function getStaleCache(feed){
+  try{
+    const raw=localStorage.getItem(CACHE_PREFIX+feed.url);
+    if(!raw)return null;
+    return JSON.parse(raw).items;
+  }catch(e){return null;}
+}
 
 /* ══════ FETCH ══════ */
 async function loadOneFeed(feed){
+  const cached=getCache(feed);
+  if(cached)return cached;
   const api='https://api.rss2json.com/v1/api.json?rss_url=';
+  const keyParam=RSS2JSON_API_KEY?('&api_key='+encodeURIComponent(RSS2JSON_API_KEY)):'';
   const ctrl=new AbortController();
   const t=setTimeout(()=>ctrl.abort(),10000);
   try{
-    const r=await fetch(api+encodeURIComponent(feed.url),{signal:ctrl.signal});
+    const r=await fetch(api+encodeURIComponent(feed.url)+keyParam,{signal:ctrl.signal});
     clearTimeout(t);
-    if(!r.ok)return[];
+    if(!r.ok){
+      failedFeeds.push({name:feed.name,peri:feed.peri,reason:'HTTP '+r.status});
+      const stale=getStaleCache(feed);
+      return stale||[];
+    }
     const d=await r.json();
-    if(d.status!=='ok')return[];
-    return(d.items||[]).slice(0,5).map(item=>({
+    if(d.status!=='ok'){
+      failedFeeds.push({name:feed.name,peri:feed.peri,reason:d.message||'quota/API rss2json'});
+      const stale=getStaleCache(feed);
+      return stale||[];
+    }
+    const items=(d.items||[]).slice(0,5).map(item=>({
       title:(item.title||'').trim(),
       link:(item.link||'').trim(),
       date:item.pubDate?item.pubDate.slice(0,10):'',
@@ -336,13 +379,21 @@ async function loadOneFeed(feed){
       source:feed.name,
       peri:feed.peri
     }));
-  }catch(e){clearTimeout(t);return[];}
+    setCache(feed,items);
+    return items;
+  }catch(e){
+    clearTimeout(t);
+    failedFeeds.push({name:feed.name,peri:feed.peri,reason:e.name==='AbortError'?'délai dépassé (10s)':'erreur réseau'});
+    const stale=getStaleCache(feed);
+    return stale||[];
+  }
 }
 
 async function loadAllFeeds(){
   if(fluxLoaded)return;
   fluxLoaded=true;
   allItems=[];
+  failedFeeds=[];
   const prog=document.getElementById('flux-progress');
   const progFill=document.getElementById('flux-progress-fill');
   const progLabel=document.getElementById('flux-progress-label');
@@ -363,6 +414,22 @@ async function loadAllFeeds(){
   allItems.sort((a,b)=>b.date>a.date?1:-1);
   updateCounts();
   renderFlux(currentFilter);
+  renderDiagnostics();
+}
+
+function renderDiagnostics(){
+  const box=document.getElementById('flux-diagnostics');
+  if(!box)return;
+  if(!failedFeeds.length){box.style.display='none';box.innerHTML='';return;}
+  box.style.display='block';
+  const noKeyHint=RSS2JSON_API_KEY?'':' — pense à ajouter ta clé API rss2json (voir haut du script) si beaucoup de flux échouent, souvent un quota anonyme dépassé.';
+  box.innerHTML=`<div class="notice" style="border-left-color:var(--danger-text)">
+    <i class="ti ti-alert-triangle"></i>
+    <span><strong>${failedFeeds.length} flux n'ont pas pu être chargés${noKeyHint}</strong>
+    <details style="margin-top:6px"><summary style="cursor:pointer">Voir le détail</summary>
+    <div style="margin-top:6px">${failedFeeds.map(f=>`<div style="padding:2px 0">${PERI_LABEL[f.peri]||f.peri} — ${f.name} <span style="color:var(--text3)">(${f.reason})</span></div>`).join('')}</div>
+    </details></span>
+  </div>`;
 }
 
 function updateCounts(){
@@ -468,7 +535,8 @@ function renderDash(){
   const dp=document.getElementById('dash-peri');
   if(!articles.length){dp.innerHTML='<div class="empty">Sauvegardez vos premiers articles depuis les flux automatiques.</div>';return;}
   dp.innerHTML=peris.map((p,i)=>{const n=articles.filter(a=>a.peri===p).length;const pct=articles.length?Math.round(n/articles.length*100):0;return`<div class="bar-row"><div class="bar-label">${p}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${fills[i]}"></div></div><div class="bar-count">${n}</div></div>`;}).join('');
-  const urgentes=articles.filter(a=>a.urg==='Haute'&&a.stat!=='Archivé'&&a.stat!=='Traité');
+  const urgentes=articles.filter(a=>(a.urg==='Haute'||a.urg==='Moyenne')&&a.stat!=='Archivé'&&a.stat!=='Traité')
+    .sort((a,b)=>(a.urg==='Haute'?0:1)-(b.urg==='Haute'?0:1));
   const du=document.getElementById('dash-urgences');
   if(!urgentes.length){du.innerHTML='<div class="empty">Aucune urgence en cours.</div>';return;}
   du.innerHTML=urgentes.map((a,idx)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:.5px solid var(--border)"><div><div style="font-size:13px;font-weight:500">${a.titre}</div><div class="meta">${periP(a.peri)}<span>${a.source}</span><span>${a.date}</span>${statP(a.stat)}</div></div><div style="display:flex;gap:6px;flex-shrink:0;align-items:center">${urgP(a.urg)}<button class="btn" style="font-size:11px;padding:3px 8px" onclick="editArticle(${articles.indexOf(a)})"><i class="ti ti-edit"></i></button></div></div>`).join('');
