@@ -105,7 +105,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 
 <nav>
   <button class="nav-btn active" onclick="show('dashboard',this)"><i class="ti ti-layout-dashboard"></i> Tableau de bord</button>
-  <button class="nav-btn" onclick="show('flux',this);if(!fluxLoaded)loadAllFeeds()"><i class="ti ti-rss"></i> Flux automatiques <span class="badge" id="nb-flux">66</span></button>
+  <button class="nav-btn" onclick="show('flux',this)"><i class="ti ti-rss"></i> Flux automatiques <span class="badge" id="nb-flux">66</span></button>
   <button class="nav-btn" onclick="show('fil',this)"><i class="ti ti-bookmark"></i> Mes articles <span class="badge" id="nb-badge">0</span></button>
   <button class="nav-btn" onclick="show('ajouter',this)"><i class="ti ti-plus"></i> Ajouter</button>
   <span class="nav-sep"></span>
@@ -129,7 +129,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
   </div>
   <div class="card">
     <div style="font-size:14px;font-weight:500;margin-bottom:.75rem">Urgences à traiter <span style="font-weight:400;color:var(--text2);font-size:12px">(Haute & Moyenne)</span></div>
-    <div id="dash-urgences"><div class="empty">Aucune urgence. <a href="#" onclick="show('flux',document.querySelectorAll('.nav-btn')[1]);if(!fluxLoaded)loadAllFeeds();return false">Parcourez les flux →</a></div></div>
+    <div id="dash-urgences"><div class="empty">Aucune urgence. <a href="#" onclick="show('flux',document.querySelectorAll('.nav-btn')[1]);return false">Parcourez les flux →</a></div></div>
   </div>
   <div class="notice"><i class="ti ti-clock"></i><span>Rythme recommandé : 30–45 min/semaine · <strong>Lundi</strong> : parcourir les flux · <strong>Jeudi</strong> : sauvegarder les pertinents + export Qualiopi</span></div>
 </div>
@@ -246,8 +246,8 @@ const RSS_FEEDS=[
   {url:"https://devenir-asv.com/feed/",name:"Devenir ASV",peri:"vet"},
   {url:"https://www.veterinaire.fr/rss.xml",name:"Ordre des Vétérinaires",peri:"vet"},
   {url:"https://soutienveterinaire.fr/feed/",name:"Soutien Vétérinaire",peri:"vet"},
-  {url:"https://ainoa-asso.fr/feed/",name:"AINOA",peri:"vet"},
-  {url:"https://portaileduc.net/website/feed/",name:"PortailEduc",peri:"vet"},
+  {url:"https://ainoa-asso.fr/feed/",name:"AINOA",peri:"ia"},
+  {url:"https://portaileduc.net/website/feed/",name:"PortailEduc",peri:"ia"},
   {url:"https://www.clubasv.fr/feed/",name:"Club ASV",peri:"vet"},
   {url:"https://www.temavet.fr/rss.xml",name:"TémaVet",peri:"vet"},
   {url:"https://supveto.com/feed/",name:"SupVéto",peri:"vet"},
@@ -314,6 +314,43 @@ const RSS_FEEDS=[
 const PERI_LABEL={vet:"Secteur vétérinaire / ASV",reg:"Réglementation / Qualiopi",ia:"Innovation pédagogique & IA"};
 const PERI_CLASS={vet:"pill-v",reg:"pill-r",ia:"pill-i"};
 
+/* ══════ PRIORITÉ SUGGÉRÉE (mots-clés) ══════
+   Basée sur les activités APform : titre ASV/GIPSA, délégation d'actes, apprentissage,
+   Qualiopi/RNCP, réglementation formation continue/VAE. Suggestion éditable, jamais imposée. */
+const PRIORITY_HIGH=["délégation d'acte","délégation d'actes","actes délégués","acte délégué","gipsa","titre asv",
+  "asv gipsa","qualiopi","rncp","certification professionnelle","loi d'orientation agricole","convention collective",
+  "échelon 5","opco ep","cqp","apprentissage vétérinaire","alternance vétérinaire","délégués du snvel","habilitation",
+  "centre de formation habilité","jury national","manuel de formation aux actes"];
+const PRIORITY_MED=["france compétences","vademecum","centre inffo","afpa","vae ","validation des acquis",
+  "formation continue","ingénierie pédagogique","référentiel","évaluation certificative","mentorat vétérinaire",
+  "bien-être animal","santé publique vétérinaire","droit de la formation","réforme de la formation","apprentissage",
+  "financement formation"];
+const PRIORITY_LOW=["canicule","sécheresse","engrais","haie","pfas","eau potable","phytosanitaire","safer",
+  "label rouge","crevette","nématode"];
+
+function suggestPriority(text){
+  const low=text.toLowerCase();
+  if(PRIORITY_HIGH.some(k=>low.includes(k)))return{urg:'Haute',impact:'Fort'};
+  if(PRIORITY_LOW.some(k=>low.includes(k)))return{urg:'Basse',impact:'Faible'};
+  if(PRIORITY_MED.some(k=>low.includes(k)))return{urg:'Moyenne',impact:'Moyen'};
+  return{urg:'Moyenne',impact:'Moyen'}; // pas de signal net : neutre par défaut, à ajuster manuellement
+}
+function suggestPriorityWrap(title,desc){
+  const p=suggestPriority(title+' '+desc);
+  return{sugUrg:p.urg,sugImpact:p.impact};
+}
+
+/* ══════ FILTRE HORS-SUJET ══════
+   Exclut automatiquement les articles clairement hors du champ vétérinaire/formation pro,
+   même s'ils viennent d'une source par ailleurs pertinente (ex: PortailEduc / FreeSewing). */
+const EXCLUDE_KEYWORDS=["patron de couture","couture","slow fashion","habillement","textile","recette de cuisine",
+  "jardinage","bricolage","loisirs créatifs","décoration intérieure","tricot","macramé"];
+
+function isOffTopic(text){
+  const low=text.toLowerCase();
+  return EXCLUDE_KEYWORDS.some(k=>low.includes(k));
+}
+
 /* ══════ CONFIG RSS2JSON ══════
    1. Crée un compte gratuit sur https://rss2json.com/ (bouton "Get Your API Key")
    2. Colle ta clé ci-dessous entre les guillemets
@@ -325,7 +362,6 @@ const CACHE_TTL_MS=45*60*1000; // 45 min : évite de re-solliciter l'API à chaq
 const CACHE_PREFIX="veille_cache_";
 
 let allItems=[];
-let fluxLoaded=false;
 let currentFilter='';
 let failedFeeds=[]; // {name, peri, reason}
 
@@ -378,14 +414,12 @@ async function loadOneFeed(feed,isRetry){
       const stale=getStaleCache(feed);
       return stale||[];
     }
-    const items=(d.items||[]).slice(0,5).map(item=>({
-      title:(item.title||'').trim(),
-      link:(item.link||'').trim(),
-      date:item.pubDate?item.pubDate.slice(0,10):'',
-      desc:(item.description||item.content||'').replace(/<[^>]+>/g,'').trim().slice(0,180),
-      source:feed.name,
-      peri:feed.peri
-    }));
+    const items=(d.items||[]).slice(0,5).map(item=>{
+      const title=(item.title||'').trim();
+      const desc=(item.description||item.content||'').replace(/<[^>]+>/g,'').trim().slice(0,180);
+      return{title,link:(item.link||'').trim(),date:item.pubDate?item.pubDate.slice(0,10):'',
+        desc,source:feed.name,peri:feed.peri,...suggestPriorityWrap(title,desc)};
+    }).filter(item=>!isOffTopic(item.title+' '+item.desc));
     setCache(feed,items);
     return items;
   }catch(e){
@@ -396,34 +430,41 @@ async function loadOneFeed(feed,isRetry){
   }
 }
 
-async function loadAllFeeds(){
-  if(fluxLoaded)return;
-  fluxLoaded=true;
-  allItems=[];
-  failedFeeds=[];
+const fluxLoadedPeri={vet:false,reg:false,ia:false};
+
+async function loadPeri(peri){
+  if(fluxLoadedPeri[peri])return;
+  fluxLoadedPeri[peri]=true;
+  const feeds=RSS_FEEDS.filter(f=>f.peri===peri);
   const prog=document.getElementById('flux-progress');
   const progFill=document.getElementById('flux-progress-fill');
   const progLabel=document.getElementById('flux-progress-label');
   prog.style.display='block';
-  document.getElementById('flux-container').innerHTML='';
-  const total=RSS_FEEDS.length;
-  // Lots de 2 en parallèle, avec pause entre chaque lot pour respecter le quota rss2json
+  const total=feeds.length;
   const batch=2;
   const pauseMs=800;
   for(let i=0;i<total;i+=batch){
-    const slice=RSS_FEEDS.slice(i,i+batch);
+    const slice=feeds.slice(i,i+batch);
     const results=await Promise.allSettled(slice.map(f=>loadOneFeed(f)));
     results.forEach(r=>{if(r.status==='fulfilled')allItems.push(...r.value);});
     progFill.style.width=Math.round(Math.min(i+batch,total)/total*100)+'%';
-    progLabel.textContent='Chargement… '+Math.min(i+batch,total)+'/'+total+' sources';
+    progLabel.textContent='Chargement '+PERI_LABEL[peri]+'… '+Math.min(i+batch,total)+'/'+total;
+    allItems.sort((a,b)=>b.date>a.date?1:-1);
+    updateCounts();
     renderFlux(currentFilter);
     if(i+batch<total)await sleep(pauseMs);
   }
   prog.style.display='none';
-  allItems.sort((a,b)=>b.date>a.date?1:-1);
   updateCounts();
   renderFlux(currentFilter);
   renderDiagnostics();
+}
+
+async function loadAllFeeds(){
+  // Charge les 3 périmètres l'un après l'autre (pas en même temps) pour respecter le quota rss2json
+  for(const peri of ['vet','reg','ia']){
+    if(!fluxLoadedPeri[peri])await loadPeri(peri);
+  }
 }
 
 function renderDiagnostics(){
@@ -452,6 +493,12 @@ function filterFlux(peri,btn){
   currentFilter=peri;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
+  if(peri){
+    if(!fluxLoadedPeri[peri])loadPeri(peri);
+  }else{
+    // Onglet "Tous" : charge les périmètres pas encore chargés, l'un après l'autre
+    loadAllFeeds();
+  }
   renderFlux(peri);
 }
 
@@ -477,14 +524,16 @@ function renderFlux(peri){
       const src=item.source.replace(/'/g,"\\'");
       const lnk=item.link.replace(/'/g,"\\'");
       const pl=PERI_LABEL[p].replace(/'/g,"\\'");
+      const urgClass=item.sugUrg==='Haute'?'pill-h':item.sugUrg==='Basse'?'pill-b':'pill-m';
       html+=`<div class="rss-item">
         <div class="rss-title"><a href="${item.link}" target="_blank" rel="noopener">${te}</a></div>
         ${item.desc?`<div class="rss-desc">${item.desc}</div>`:''}
         <div class="meta">
           <span class="pill ${PERI_CLASS[p]}">${PERI_LABEL[p]}</span>
+          <span class="pill ${urgClass}" title="Priorité suggérée automatiquement, à ajuster">${item.sugUrg} · ${item.sugImpact}</span>
           <span>${item.source}</span>
           ${item.date?`<span>${item.date}</span>`:''}
-          <button class="btn btn-primary" style="font-size:11px;padding:2px 9px" onclick="quickSave('${ts}','${src}','${lnk}','${item.date}','${pl}')">
+          <button class="btn btn-primary" style="font-size:11px;padding:2px 9px" onclick="quickSave('${ts}','${src}','${lnk}','${item.date}','${pl}','${item.sugUrg}','${item.sugImpact}')">
             <i class="ti ti-bookmark"></i> Sauvegarder
           </button>
         </div>
@@ -495,7 +544,7 @@ function renderFlux(peri){
   container.innerHTML=html||'<div class="empty">Aucun article disponible.</div>';
 }
 
-function quickSave(title,source,url,date,periLabel){
+function quickSave(title,source,url,date,periLabel,sugUrg,sugImpact){
   cancelEdit();
   document.getElementById('form-title').textContent='Sauvegarder cet article';
   document.getElementById('a-titre').value=title;
@@ -503,7 +552,8 @@ function quickSave(title,source,url,date,periLabel){
   document.getElementById('a-url').value=url;
   document.getElementById('a-date').value=date||new Date().toISOString().slice(0,10);
   document.getElementById('a-peri').value=periLabel;
-  document.getElementById('a-urg').value='';
+  document.getElementById('a-urg').value=sugUrg||'';
+  document.getElementById('a-impact').value=sugImpact||'';
   show('ajouter',document.querySelectorAll('.nav-btn')[3]);
   setTimeout(()=>document.getElementById('a-urg').focus(),300);
 }
