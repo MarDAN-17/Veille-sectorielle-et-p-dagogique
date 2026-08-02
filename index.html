@@ -359,7 +359,7 @@ function isOffTopic(text){
 const RSS2JSON_API_KEY="m3bh1uwyao83ewcyiwjleu82z5emozw0vs7hcwgb";
 
 const CACHE_TTL_MS=45*60*1000; // 45 min : évite de re-solliciter l'API à chaque visite
-const CACHE_PREFIX="veille_cache_";
+const CACHE_PREFIX="veille_cache_v2_";
 
 let allItems=[];
 let currentFilter='';
@@ -399,8 +399,8 @@ async function loadOneFeed(feed,isRetry){
     const r=await fetch(api+encodeURIComponent(feed.url)+keyParam,{signal:ctrl.signal});
     clearTimeout(t);
     if(r.status===429&&!isRetry){
-      // Trop de requêtes trop vite : on patiente puis on retente une fois
-      await sleep(3000);
+      // Trop de requêtes trop vite : on patiente plus longtemps puis on retente une fois
+      await sleep(6000);
       return loadOneFeed(feed,true);
     }
     if(!r.ok){
@@ -441,8 +441,8 @@ async function loadPeri(peri){
   const progLabel=document.getElementById('flux-progress-label');
   prog.style.display='block';
   const total=feeds.length;
-  const batch=2;
-  const pauseMs=800;
+  const batch=1;
+  const pauseMs=2500;
   for(let i=0;i<total;i+=batch){
     const slice=feeds.slice(i,i+batch);
     const results=await Promise.allSettled(slice.map(f=>loadOneFeed(f)));
@@ -508,6 +508,14 @@ function renderFlux(peri){
   if(!items.length){container.innerHTML='<div class="empty">Chargement en cours…</div>';return;}
   const groups={vet:[],reg:[],ia:[]};
   items.forEach(i=>{if(groups[i.peri])groups[i.peri].push(i);});
+  const urgRank={Haute:0,Moyenne:1,Basse:2};
+  Object.keys(groups).forEach(p=>{
+    groups[p].sort((a,b)=>{
+      const ra=urgRank[a.sugUrg]??1,rb=urgRank[b.sugUrg]??1;
+      if(ra!==rb)return ra-rb;
+      return b.date>a.date?1:-1;
+    });
+  });
   const order=['vet','reg','ia'];
   let html='';
   order.forEach(p=>{
