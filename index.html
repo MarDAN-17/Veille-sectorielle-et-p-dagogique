@@ -399,8 +399,8 @@ async function loadOneFeed(feed,isRetry){
     const r=await fetch(api+encodeURIComponent(feed.url)+keyParam,{signal:ctrl.signal});
     clearTimeout(t);
     if(r.status===429&&!isRetry){
-      // Trop de requêtes trop vite : on patiente plus longtemps puis on retente une fois
-      await sleep(6000);
+      // Trop de requêtes trop vite : on patiente largement plus qu'une minute puis on retente une fois
+      await sleep(15000);
       return loadOneFeed(feed,true);
     }
     if(!r.ok){
@@ -442,13 +442,13 @@ async function loadPeri(peri){
   prog.style.display='block';
   const total=feeds.length;
   const batch=1;
-  const pauseMs=2500;
+  const pauseMs=13000; // 5 requêtes/minute max sur le plan gratuit rss2json → ~1 toutes les 12s + marge
   for(let i=0;i<total;i+=batch){
     const slice=feeds.slice(i,i+batch);
     const results=await Promise.allSettled(slice.map(f=>loadOneFeed(f)));
     results.forEach(r=>{if(r.status==='fulfilled')allItems.push(...r.value);});
     progFill.style.width=Math.round(Math.min(i+batch,total)/total*100)+'%';
-    progLabel.textContent='Chargement '+PERI_LABEL[peri]+'… '+Math.min(i+batch,total)+'/'+total;
+    progLabel.textContent='Chargement '+PERI_LABEL[peri]+'… '+Math.min(i+batch,total)+'/'+total+' (≈13 sec/flux, merci de patienter)';
     allItems.sort((a,b)=>b.date>a.date?1:-1);
     updateCounts();
     renderFlux(currentFilter);
