@@ -404,7 +404,13 @@ async function loadOneFeed(feed,isRetry){
       return loadOneFeed(feed,true);
     }
     if(!r.ok){
-      failedFeeds.push({name:feed.name,peri:feed.peri,reason:'HTTP '+r.status});
+      let detail='HTTP '+r.status;
+      try{
+        const body=await r.text();
+        const parsed=JSON.parse(body);
+        if(parsed.message)detail+=' — '+parsed.message;
+      }catch(e){}
+      failedFeeds.push({name:feed.name,peri:feed.peri,reason:detail});
       const stale=getStaleCache(feed);
       return stale||[];
     }
