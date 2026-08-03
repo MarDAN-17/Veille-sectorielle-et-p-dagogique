@@ -36,9 +36,6 @@ const RSS_FEEDS = [
   {url:"https://legifrss.org/latest?q=protection%20animale",name:"Légifrance — Protection animale",peri:"vet"},
   {url:"https://legifrss.org/latest?q=%C3%A9levage",name:"Légifrance — Élevage",peri:"vet"},
   {url:"https://legifrss.org/latest?q=alimentation%20animale",name:"Légifrance — Alimentation animale",peri:"vet"},
-  {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCCjhb6t5EvFi1Q9dxjtsGug",name:"YouTube Vétérinaire 1",peri:"vet"},
-  {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCQz81anVcxld-6HNaDgJk8w",name:"YouTube Vétérinaire 2",peri:"vet"},
-  {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCDtPj4JwltQ7eGcvONk7Bdg",name:"YouTube Vétérinaire 3",peri:"vet"},
   /* RÉGLEMENTATION / QUALIOPI */
   {url:"https://www.francecompetences.fr/feed",name:"France Compétences",peri:"reg"},
   {url:"https://www.francecompetences.fr/rss",name:"France Compétences RSS",peri:"reg"},
@@ -54,8 +51,6 @@ const RSS_FEEDS = [
   {url:"https://www.veilleformation.com/feed",name:"Veille Formation",peri:"reg"},
   {url:"https://www.afpa.fr/l-afpa/espace-presse/rss",name:"AFPA",peri:"reg"},
   {url:"https://rss.app/feeds/dFVbEbdCTARlNGNm.xml",name:"OPCO EP",peri:"reg"},
-  {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCtwR0NyeLK63RawgCn1bpjA",name:"YouTube Formation",peri:"reg"},
-  {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UC-zok-gIWJ-bhejr55XAzmw",name:"YouTube Qualiopi",peri:"reg"},
   /* IA & PÉDAGOGIE */
   {url:"https://ainoa-asso.fr/feed/",name:"AINOA",peri:"ia"},
   {url:"https://portaileduc.net/website/feed/",name:"PortailEduc",peri:"ia"},
@@ -77,8 +72,6 @@ const RSS_FEEDS = [
   {url:"https://rss.app/feeds/zdAHoPpGZHrQhHoq.xml",name:"RDV en terre digitale",peri:"ia"},
   {url:"https://www.digiformag.com/feed/",name:"Digiformag",peri:"ia"},
   {url:"https://www.certif-avenir.fr/blog-feed.xml",name:"Certif Avenir",peri:"ia"},
-  {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCr5YOGCItfr20O_a5Zh8O_Q",name:"YouTube IA Péda 1",peri:"ia"},
-  {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCrDwWp7EBBv4NwvScIpBDOA",name:"YouTube IA Péda 2",peri:"ia"},
 ];
 
 /* ══════ PRIORITÉ SUGGÉRÉE (mêmes mots-clés que côté site) ══════ */
@@ -96,9 +89,8 @@ const PRIORITY_LOW=["canicule","sécheresse","engrais","haie","pfas","eau potabl
 function suggestPriority(text){
   const low=text.toLowerCase();
   if(PRIORITY_HIGH.some(k=>low.includes(k)))return{urg:'Haute',impact:'Fort'};
-  if(PRIORITY_LOW.some(k=>low.includes(k)))return{urg:'Basse',impact:'Faible'};
   if(PRIORITY_MED.some(k=>low.includes(k)))return{urg:'Moyenne',impact:'Moyen'};
-  return{urg:'Moyenne',impact:'Moyen'};
+  return{urg:'Basse',impact:'Faible'}; // pas de signal net lié à l'activité APform : faible par défaut
 }
 
 /* ══════ FILTRE HORS-SUJET ══════ */
@@ -114,13 +106,27 @@ function stripHtml(html){
   return (html||'').replace(/<[^>]+>/g,'').trim();
 }
 
+async function fetchWithFallback(url){
+  try{
+    return await parser.parseURL(url);
+  }catch(e){
+    // Repli : certains flux WordPress mal formés (ex: "&" non échappé) font échouer le parseur strict.
+    // On récupère le texte brut, on corrige les "&" isolés, et on retente.
+    const res=await fetch(url);
+    if(!res.ok)throw e;
+    let text=await res.text();
+    text=text.replace(/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-fA-F]+;)/g,'&amp;');
+    return await parser.parseString(text);
+  }
+}
+
 async function run(){
   const allItems=[];
   const failedFeeds=[];
 
   for(const feed of RSS_FEEDS){
     try{
-      const parsed=await parser.parseURL(feed.url);
+      const parsed=await fetchWithFallback(feed.url);
       const items=(parsed.items||[]).slice(0,5).map(item=>{
         const title=(item.title||'').trim();
         const desc=stripHtml(item.contentSnippet||item.content||item.summary||'').slice(0,180);
