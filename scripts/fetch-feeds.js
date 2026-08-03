@@ -65,12 +65,11 @@ const RSS_FEEDS = [
   {url:"https://openai.com/news/rss.xml",name:"OpenAI Blog",peri:"ia"},
   {url:"https://towardsdatascience.com/feed/",name:"Towards Data Science",peri:"ia"},
   {url:"https://feeds.podcastics.com/podcastics/podcasts/rss/6628_a9c72191f50b205a6ebe0276fb677e8f.rss",name:"Podcast Formation Pro",peri:"ia"},
-  {url:"https://www.audible.fr/blog/rss.xml",name:"Audible Blog",peri:"ia"},
   {url:"https://rss.app/feeds/pwLs2q5Qei1xfnGG.xml",name:"Blog Articulate",peri:"ia"},
   {url:"https://rss.app/feeds/esKG9cZhHIbFAZVl.xml",name:"Blog MyVirtualClassroom",peri:"ia"},
   {url:"https://rss.app/feeds/zdAHoPpGZHrQhHoq.xml",name:"RDV en terre digitale",peri:"ia"},
   {url:"https://www.digiformag.com/feed/",name:"Digiformag",peri:"ia"},
-  {url:"https://www.certif-avenir.fr/blog-feed.xml",name:"Certif Avenir",peri:"ia"},
+  {url:"https://www.certif-avenir.fr/blog-feed.xml",name:"Certif Avenir",peri:"reg"},
 ];
 
 /* ══════ PRIORITÉ SUGGÉRÉE — modèle à points cumulables ══════ */
@@ -100,10 +99,11 @@ function countMatches(text,list){
 
 function suggestPriority(text,sourceName,peri){
   const low=text.toLowerCase();
-  let score=0;
-  score+=countMatches(low,PRIORITY_HIGH)*3;
-  score+=countMatches(low,PRIORITY_MED)*1;
-  if(SOURCE_PRIORITY[peri]&&SOURCE_PRIORITY[peri].includes(sourceName))score+=2;
+  const keywordScore=countMatches(low,PRIORITY_HIGH)*3+countMatches(low,PRIORITY_MED)*1;
+  let score=keywordScore;
+  // Le bonus de source ne s'applique que s'il y a déjà un signal de contenu :
+  // une source prioritaire ne doit jamais, à elle seule, créer une priorité.
+  if(keywordScore>0&&SOURCE_PRIORITY[peri]&&SOURCE_PRIORITY[peri].includes(sourceName))score+=2;
   if(score>=3)return{urg:'Haute',impact:'Fort'};
   if(score>=1)return{urg:'Moyenne',impact:'Moyen'};
   return{urg:'Basse',impact:'Faible'};
@@ -116,6 +116,18 @@ const EXCLUDE_KEYWORDS=["patron de couture","couture","slow fashion","habillemen
 function isOffTopic(text){
   const low=text.toLowerCase();
   return EXCLUDE_KEYWORDS.some(k=>low.includes(k));
+}
+
+/* Certaines sources mélangent des articles de blog avec des pages de catalogue/offres de
+   formation dans leur flux RSS. On exclut ces pages-là par motif d'URL, source par source. */
+const SKIP_LINK_PATTERNS={
+  ISTF:["/formation/","/catalogue/"]
+};
+
+function isSkippedLink(sourceName,link){
+  const patterns=SKIP_LINK_PATTERNS[sourceName];
+  if(!patterns)return false;
+  return patterns.some(p=>link.includes(p));
 }
 
 function stripHtml(html){
@@ -149,7 +161,7 @@ async function run(){
         const date=item.isoDate?item.isoDate.slice(0,10):(item.pubDate?new Date(item.pubDate).toISOString().slice(0,10):'');
         const p=suggestPriority(title+' '+desc,feed.name,feed.peri);
         return{title,link:(item.link||'').trim(),date,desc,source:feed.name,peri:feed.peri,sugUrg:p.urg,sugImpact:p.impact};
-      }).filter(it=>!isOffTopic(it.title+' '+it.desc));
+      }).filter(it=>!isOffTopic(it.title+' '+it.desc)&&!isSkippedLink(feed.name,it.link));
       allItems.push(...items);
       console.log(`✔ ${feed.name} (${items.length} articles)`);
     }catch(e){
