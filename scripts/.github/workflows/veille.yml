@@ -1,0 +1,35 @@
+name: Rafraîchir les flux de veille
+
+on:
+  schedule:
+    - cron: '0 5 * * *'   # 05:00 UTC ≈ 6h/7h heure de Paris selon la saison
+  workflow_dispatch: {}    # permet aussi de le lancer manuellement depuis l'onglet "Actions"
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-feeds:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Installer les dépendances
+        run: npm install
+
+      - name: Générer feeds.json
+        run: node scripts/fetch-feeds.js
+
+      - name: Publier le fichier mis à jour
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add feeds.json
+          git diff --staged --quiet || git commit -m "Mise à jour automatique des flux ($(date -u +%Y-%m-%dT%H:%M:%SZ))"
+          git push
