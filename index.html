@@ -140,6 +140,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
   <div class="notice"><i class="ti ti-sparkles"></i><span>Articles mis à jour automatiquement 1x/jour. Cliquez <strong>Sauvegarder</strong> pour archiver un article avec son degré d'urgence.</span></div>
   <div id="flux-last-update" style="font-size:11px;color:var(--text3);margin-bottom:8px"></div>
   <div id="flux-diagnostics" style="display:none;margin-bottom:1rem"></div>
+  <input type="text" id="flux-search" placeholder="🔍 Rechercher dans les flux par mot-clé…" oninput="renderFlux(currentFilter)" style="width:100%;box-sizing:border-box;padding:7px 10px;margin-bottom:10px;border:.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px">
   <div class="tab-bar">
     <button class="tab-btn active" onclick="filterFlux('',this)">Tous <span id="cnt-all" class="badge">0</span></button>
     <button class="tab-btn" onclick="filterFlux('vet',this)"><span class="pill pill-v">Vétérinaire</span> <span id="cnt-vet" class="badge">0</span></button>
@@ -152,6 +153,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 <!-- MES ARTICLES -->
 <div id="fil" class="section">
   <div class="filters">
+    <input type="text" id="f-search" placeholder="🔍 Rechercher par mot-clé…" oninput="renderFil()" style="flex:1;min-width:180px;padding:6px 10px;border:.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px">
     <select id="f-peri" onchange="renderFil()"><option value="">Tous périmètres</option><option>Secteur vétérinaire / ASV</option><option>Réglementation / Qualiopi</option><option>Innovation pédagogique & IA</option></select>
     <select id="f-urg" onchange="renderFil()"><option value="">Toute urgence</option><option>Haute</option><option>Moyenne</option><option>Basse</option></select>
     <select id="f-stat" onchange="renderFil()"><option value="">Tout statut</option><option>Nouveau</option><option>Lu</option><option>Traité</option><option>Archivé</option></select>
@@ -377,8 +379,14 @@ function filterFlux(peri,btn){
 
 function renderFlux(peri){
   const container=document.getElementById('flux-container');
-  const items=peri?allItems.filter(i=>i.peri===peri):allItems;
-  if(!items.length){container.innerHTML='<div class="empty">Chargement en cours…</div>';return;}
+  if(!allItems.length){container.innerHTML='<div class="empty">Chargement en cours…</div>';return;}
+  const searchEl=document.getElementById('flux-search');
+  const fq=searchEl?searchEl.value.trim().toLowerCase():'';
+  let items=peri?allItems.filter(i=>i.peri===peri):allItems;
+  if(fq){
+    items=items.filter(i=>((i.title||'')+' '+(i.desc||'')+' '+(i.source||'')).toLowerCase().includes(fq));
+  }
+  if(!items.length){container.innerHTML=`<div class="empty">Aucun article ne correspond à "${fq}".</div>`;return;}
   const groups={vet:[],reg:[],ia:[]};
   items.forEach(i=>{if(groups[i.peri])groups[i.peri].push(i);});
   const urgRank={Haute:0,Moyenne:1,Basse:2};
@@ -485,12 +493,22 @@ function renderDash(){
 /* ══════ FIL ══════ */
 function renderFil(){
   const fp=document.getElementById('f-peri').value,fu=document.getElementById('f-urg').value,fs=document.getElementById('f-stat').value;
-  const list=articles.map((a,i)=>({...a,_i:i})).filter(a=>{if(fp&&a.peri!==fp)return false;if(fu&&a.urg!==fu)return false;if(fs&&a.stat!==fs)return false;return true;});
+  const fq=(document.getElementById('f-search').value||'').trim().toLowerCase();
+  const list=articles.map((a,i)=>({...a,_i:i})).filter(a=>{
+    if(fp&&a.peri!==fp)return false;
+    if(fu&&a.urg!==fu)return false;
+    if(fs&&a.stat!==fs)return false;
+    if(fq){
+      const hay=((a.titre||'')+' '+(a.resume||'')+' '+(a.source||'')+' '+(a.thema||'')).toLowerCase();
+      if(!hay.includes(fq))return false;
+    }
+    return true;
+  });
   const el=document.getElementById('fil-list');
   if(!list.length){el.innerHTML='<div class="empty">Aucun article sauvegardé.</div>';return;}
   el.innerHTML=list.map(a=>`<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px"><div style="font-weight:500;font-size:14px;flex:1">${a.titre}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">${urgP(a.urg)}${a.impact?`<span style="font-size:11px;color:var(--text2)">Impact ${a.impact}</span>`:''}</div></div>${a.resume?`<div style="font-size:13px;color:var(--text2);margin-bottom:6px">${a.resume}</div>`:''}<div class="meta">${periP(a.peri)}${a.thema?`<span class="pill pill-g">${a.thema}</span>`:''}<span>${a.source}</span><span>${a.date}</span>${statP(a.stat)}${a.url?`<a href="${a.url}" target="_blank"><i class="ti ti-external-link"></i> Lire</a>`:''}</div><div style="margin-top:8px;display:flex;gap:6px"><button class="btn" style="font-size:12px;padding:3px 10px" onclick="editArticle(${a._i})"><i class="ti ti-edit"></i> Modifier</button><button class="btn btn-danger" style="font-size:12px;padding:3px 10px" onclick="deleteArticle(${a._i})"><i class="ti ti-trash"></i> Supprimer</button></div></div>`).join('');
 }
-function resetFilters(){['f-peri','f-urg','f-stat'].forEach(id=>document.getElementById(id).value='');renderFil();}
+function resetFilters(){['f-peri','f-urg','f-stat'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-search').value='';renderFil();}
 
 /* ══════ SAVE / EDIT / DELETE ══════ */
 function saveArticle(){
