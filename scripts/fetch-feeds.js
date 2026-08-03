@@ -134,17 +134,43 @@ function stripHtml(html){
   return (html||'').replace(/<[^>]+>/g,'').trim();
 }
 
+function decodeEntities(s){
+  return (s||'').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,'$1')
+    .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"')
+    .replace(/&#39;/g,"'").replace(/&apos;/g,"'").replace(/&amp;/g,'&');
+}
+
+function extractItemsWithRegex(text){
+  const items=[];
+  const blocks=text.match(/<item\b[\s\S]*?<\/item>/gi)||[];
+  for(const block of blocks){
+    const g=(tag)=>{const m=block.match(new RegExp('<'+tag+'[^>]*>([\\s\\S]*?)<\\/'+tag+'>','i'));return m?decodeEntities(m[1]).trim():'';};
+    items.push({title:g('title'),link:g('link'),pubDate:g('pubDate'),content:g('description')});
+  }
+  return{items};
+}
+
 async function fetchWithFallback(url){
   try{
     return await parser.parseURL(url);
-  }catch(e){
-    // Repli : certains flux WordPress mal formés (ex: "&" non échappé) font échouer le parseur strict.
-    // On récupère le texte brut, on corrige les "&" isolés, et on retente.
-    const res=await fetch(url);
-    if(!res.ok)throw e;
-    let text=await res.text();
-    text=text.replace(/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-fA-F]+;)/g,'&amp;');
-    return await parser.parseString(text);
+  }catch(e1){
+    // Repli niveau 1 : "&" isolés non échappés, cause fréquente sur les flux WordPress.
+    try{
+      const res=await fetch(url);
+      if(!res.ok)throw e1;
+      let text=await res.text();
+      const fixedAmp=text.replace(/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-fA-F]+;)/g,'&amp;');
+      return await parser.parseString(fixedAmp);
+    }catch(e2){
+      // Repli niveau 2 : XML structurellement cassé (balises mal fermées, imbrication invalide...).
+      // On extrait les articles à la main par motif texte, sans passer par un parseur XML strict.
+      const res=await fetch(url);
+      if(!res.ok)throw e1;
+      const text=await res.text();
+      const manual=extractItemsWithRegex(text);
+      if(!manual.items.length)throw e1;
+      return manual;
+    }
   }
 }
 
