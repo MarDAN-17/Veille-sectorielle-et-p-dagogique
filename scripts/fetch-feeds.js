@@ -49,7 +49,6 @@ const RSS_FEEDS = [
   {url:"https://www.centre-inffo.fr/category/innovation-formation/feed",name:"Centre Inffo — Innovation",peri:"reg"},
   {url:"https://lesacteursdelacompetence.fr/feed/",name:"Les Acteurs Compétence",peri:"reg"},
   {url:"https://www.veilleformation.com/feed",name:"Veille Formation",peri:"reg"},
-  {url:"https://www.afpa.fr/l-afpa/espace-presse/rss",name:"AFPA",peri:"reg"},
   {url:"https://rss.app/feeds/dFVbEbdCTARlNGNm.xml",name:"OPCO EP",peri:"reg"},
   /* IA & PÉDAGOGIE */
   {url:"https://ainoa-asso.fr/feed/",name:"AINOA",peri:"ia"},
@@ -74,23 +73,40 @@ const RSS_FEEDS = [
   {url:"https://www.certif-avenir.fr/blog-feed.xml",name:"Certif Avenir",peri:"ia"},
 ];
 
-/* ══════ PRIORITÉ SUGGÉRÉE (mêmes mots-clés que côté site) ══════ */
+/* ══════ PRIORITÉ SUGGÉRÉE — modèle à points cumulables ══════ */
 const PRIORITY_HIGH=["délégation d'acte","délégation d'actes","actes délégués","acte délégué","gipsa","titre asv",
   "asv gipsa","qualiopi","rncp","certification professionnelle","loi d'orientation agricole","convention collective",
   "échelon 5","opco ep","cqp","apprentissage vétérinaire","alternance vétérinaire","délégués du snvel","habilitation",
   "centre de formation habilité","jury national","manuel de formation aux actes"];
-const PRIORITY_MED=["france compétences","vademecum","centre inffo","afpa","vae ","validation des acquis",
+const PRIORITY_MED=["france compétences","vademecum","centre inffo","vae ","validation des acquis",
   "formation continue","ingénierie pédagogique","référentiel","évaluation certificative","mentorat vétérinaire",
   "bien-être animal","santé publique vétérinaire","droit de la formation","réforme de la formation","apprentissage",
-  "financement formation"];
+  "apprenti","apprentis","contrat d'apprentissage","premier équipement","financement formation","financement des apprentis"];
 const PRIORITY_LOW=["canicule","sécheresse","engrais","haie","pfas","eau potable","phytosanitaire","safer",
   "label rouge","crevette","nématode"];
 
-function suggestPriority(text){
+/* Sources dont la seule provenance justifie un bonus de priorité, propre à chaque périmètre */
+const SOURCE_PRIORITY={
+  vet:["SNVEL","APFORM","Ordre des Vétérinaires"],
+  reg:["OPCO EP","France Compétences","France Compétences RSS","Centre Inffo","Centre Inffo — Quotidien",
+    "Centre Inffo — Réforme","Centre Inffo — Droit formation","Centre Inffo — Régions","Centre Inffo — Europe",
+    "Centre Inffo — Innovation"],
+  ia:["AINOA","Sydologie","Podcast de la Formation","L'Atelier du Formateur"]
+};
+
+function countMatches(text,list){
+  return list.reduce((n,k)=>text.includes(k)?n+1:n,0);
+}
+
+function suggestPriority(text,sourceName,peri){
   const low=text.toLowerCase();
-  if(PRIORITY_HIGH.some(k=>low.includes(k)))return{urg:'Haute',impact:'Fort'};
-  if(PRIORITY_MED.some(k=>low.includes(k)))return{urg:'Moyenne',impact:'Moyen'};
-  return{urg:'Basse',impact:'Faible'}; // pas de signal net lié à l'activité APform : faible par défaut
+  let score=0;
+  score+=countMatches(low,PRIORITY_HIGH)*3;
+  score+=countMatches(low,PRIORITY_MED)*1;
+  if(SOURCE_PRIORITY[peri]&&SOURCE_PRIORITY[peri].includes(sourceName))score+=2;
+  if(score>=3)return{urg:'Haute',impact:'Fort'};
+  if(score>=1)return{urg:'Moyenne',impact:'Moyen'};
+  return{urg:'Basse',impact:'Faible'};
 }
 
 /* ══════ FILTRE HORS-SUJET ══════ */
@@ -131,7 +147,7 @@ async function run(){
         const title=(item.title||'').trim();
         const desc=stripHtml(item.contentSnippet||item.content||item.summary||'').slice(0,180);
         const date=item.isoDate?item.isoDate.slice(0,10):(item.pubDate?new Date(item.pubDate).toISOString().slice(0,10):'');
-        const p=suggestPriority(title+' '+desc);
+        const p=suggestPriority(title+' '+desc,feed.name,feed.peri);
         return{title,link:(item.link||'').trim(),date,desc,source:feed.name,peri:feed.peri,sugUrg:p.urg,sugImpact:p.impact};
       }).filter(it=>!isOffTopic(it.title+' '+it.desc));
       allItems.push(...items);
