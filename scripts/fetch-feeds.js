@@ -149,4 +149,4 @@ async function run(){
   console.log(`\nTerminé : ${allItems.length} articles récupérés, ${failedFeeds.length} flux en échec sur ${RSS_FEEDS.length}.`);
 }
 
-run().catch(e=>{console.error(e);process.exit(1);});
+run().then(()=>process.exit(0)).catch(e=>{console.error(e);process.exit(1);});
