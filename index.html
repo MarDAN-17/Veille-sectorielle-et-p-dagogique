@@ -105,7 +105,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 
 <nav>
   <button class="nav-btn active" onclick="show('dashboard',this)"><i class="ti ti-layout-dashboard"></i> Tableau de bord</button>
-  <button class="nav-btn" onclick="show('flux',this)"><i class="ti ti-rss"></i> Flux automatiques <span class="badge" id="nb-flux">66</span></button>
+  <button class="nav-btn" onclick="show('flux',this);loadFeedsData()"><i class="ti ti-rss"></i> Flux automatiques <span class="badge" id="nb-flux">65</span></button>
   <button class="nav-btn" onclick="show('fil',this)"><i class="ti ti-bookmark"></i> Mes articles <span class="badge" id="nb-badge">0</span></button>
   <button class="nav-btn" onclick="show('ajouter',this)"><i class="ti ti-plus"></i> Ajouter</button>
   <span class="nav-sep"></span>
@@ -121,7 +121,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
     <div class="stat"><div class="stat-label">Articles sauvegardés</div><div class="stat-val" id="st-total">0</div></div>
     <div class="stat"><div class="stat-label"><span class="dot dot-h"></span>Urgence haute</div><div class="stat-val" id="st-h">0</div></div>
     <div class="stat"><div class="stat-label"><span class="dot dot-m"></span>Urgence moyenne</div><div class="stat-val" id="st-m">0</div></div>
-    <div class="stat"><div class="stat-label"><i class="ti ti-rss"></i> Flux RSS</div><div class="stat-val">66</div></div>
+    <div class="stat"><div class="stat-label"><i class="ti ti-rss"></i> Flux RSS</div><div class="stat-val">65</div></div>
   </div>
   <div class="card">
     <div style="font-size:14px;font-weight:500;margin-bottom:1rem">Répartition par périmètre</div>
@@ -129,19 +129,16 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
   </div>
   <div class="card">
     <div style="font-size:14px;font-weight:500;margin-bottom:.75rem">Urgences à traiter <span style="font-weight:400;color:var(--text2);font-size:12px">(Haute & Moyenne)</span></div>
-    <div id="dash-urgences"><div class="empty">Aucune urgence. <a href="#" onclick="show('flux',document.querySelectorAll('.nav-btn')[1]);return false">Parcourez les flux →</a></div></div>
+    <div id="dash-urgences"><div class="empty">Aucune urgence. <a href="#" onclick="show('flux',document.querySelectorAll('.nav-btn')[1]);loadFeedsData();return false">Parcourez les flux →</a></div></div>
   </div>
   <div class="notice"><i class="ti ti-clock"></i><span>Rythme recommandé : 30–45 min/semaine · <strong>Lundi</strong> : parcourir les flux · <strong>Jeudi</strong> : sauvegarder les pertinents + export Qualiopi</span></div>
 </div>
 
 <!-- FLUX -->
 <div id="flux" class="section">
-  <div class="section-title">Flux automatiques — 66 sources</div>
-  <div class="notice"><i class="ti ti-sparkles"></i><span>Articles chargés en direct. Cliquez <strong>Sauvegarder</strong> pour archiver un article avec son degré d'urgence.</span></div>
-  <div id="flux-progress" style="display:none">
-    <div style="font-size:12px;color:var(--text2);margin-bottom:6px" id="flux-progress-label">Chargement…</div>
-    <div class="progress-bar"><div class="progress-fill" id="flux-progress-fill" style="width:0%"></div></div>
-  </div>
+  <div class="section-title">Flux automatiques — 65 sources</div>
+  <div class="notice"><i class="ti ti-sparkles"></i><span>Articles mis à jour automatiquement 1x/jour. Cliquez <strong>Sauvegarder</strong> pour archiver un article avec son degré d'urgence.</span></div>
+  <div id="flux-last-update" style="font-size:11px;color:var(--text3);margin-bottom:8px"></div>
   <div id="flux-diagnostics" style="display:none;margin-bottom:1rem"></div>
   <div class="tab-bar">
     <button class="tab-btn active" onclick="filterFlux('',this)">Tous <span id="cnt-all" class="badge">0</span></button>
@@ -203,7 +200,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 
 <!-- SOURCES -->
 <div id="sources" class="section">
-  <div class="section-title">Sources — 66 flux RSS actifs</div>
+  <div class="section-title">Sources — 65 flux RSS actifs</div>
   <div class="notice"><i class="ti ti-info-circle"></i><span><span style="color:var(--success-text)">● RSS</span> = flux intégré · Priorité : 🔴 Prioritaire · 🟡 Élevée · ⚪ Moyenne</span></div>
   <div class="card" style="margin-bottom:.75rem"><div style="font-weight:500;font-size:13px;margin-bottom:10px"><span class="pill pill-v">Secteur vétérinaire / ASV</span></div><div id="src-vet"></div></div>
   <div class="card" style="margin-bottom:.75rem"><div style="font-weight:500;font-size:13px;margin-bottom:10px"><span class="pill pill-r">Réglementation / Qualiopi</span></div><div id="src-reg"></div></div>
@@ -239,7 +236,7 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
 </div>
 
 <script>
-/* ══════ FLUX RSS — 66 sources ══════ */
+/* ══════ FLUX RSS — 65 sources ══════ */
 const RSS_FEEDS=[
   /* VÉTÉRINAIRE */
   {url:"https://apform.fr/feed/",name:"APFORM",peri:"vet"},
@@ -314,163 +311,39 @@ const RSS_FEEDS=[
 const PERI_LABEL={vet:"Secteur vétérinaire / ASV",reg:"Réglementation / Qualiopi",ia:"Innovation pédagogique & IA"};
 const PERI_CLASS={vet:"pill-v",reg:"pill-r",ia:"pill-i"};
 
-/* ══════ PRIORITÉ SUGGÉRÉE (mots-clés) ══════
-   Basée sur les activités APform : titre ASV/GIPSA, délégation d'actes, apprentissage,
-   Qualiopi/RNCP, réglementation formation continue/VAE. Suggestion éditable, jamais imposée. */
-const PRIORITY_HIGH=["délégation d'acte","délégation d'actes","actes délégués","acte délégué","gipsa","titre asv",
-  "asv gipsa","qualiopi","rncp","certification professionnelle","loi d'orientation agricole","convention collective",
-  "échelon 5","opco ep","cqp","apprentissage vétérinaire","alternance vétérinaire","délégués du snvel","habilitation",
-  "centre de formation habilité","jury national","manuel de formation aux actes"];
-const PRIORITY_MED=["france compétences","vademecum","centre inffo","afpa","vae ","validation des acquis",
-  "formation continue","ingénierie pédagogique","référentiel","évaluation certificative","mentorat vétérinaire",
-  "bien-être animal","santé publique vétérinaire","droit de la formation","réforme de la formation","apprentissage",
-  "financement formation"];
-const PRIORITY_LOW=["canicule","sécheresse","engrais","haie","pfas","eau potable","phytosanitaire","safer",
-  "label rouge","crevette","nématode"];
-
-function suggestPriority(text){
-  const low=text.toLowerCase();
-  if(PRIORITY_HIGH.some(k=>low.includes(k)))return{urg:'Haute',impact:'Fort'};
-  if(PRIORITY_LOW.some(k=>low.includes(k)))return{urg:'Basse',impact:'Faible'};
-  if(PRIORITY_MED.some(k=>low.includes(k)))return{urg:'Moyenne',impact:'Moyen'};
-  return{urg:'Moyenne',impact:'Moyen'}; // pas de signal net : neutre par défaut, à ajuster manuellement
-}
-function suggestPriorityWrap(title,desc){
-  const p=suggestPriority(title+' '+desc);
-  return{sugUrg:p.urg,sugImpact:p.impact};
-}
-
-/* ══════ FILTRE HORS-SUJET ══════
-   Exclut automatiquement les articles clairement hors du champ vétérinaire/formation pro,
-   même s'ils viennent d'une source par ailleurs pertinente (ex: PortailEduc / FreeSewing). */
-const EXCLUDE_KEYWORDS=["patron de couture","couture","slow fashion","habillement","textile","recette de cuisine",
-  "jardinage","bricolage","loisirs créatifs","décoration intérieure","tricot","macramé"];
-
-function isOffTopic(text){
-  const low=text.toLowerCase();
-  return EXCLUDE_KEYWORDS.some(k=>low.includes(k));
-}
-
-/* ══════ CONFIG RSS2JSON ══════
-   1. Crée un compte gratuit sur https://rss2json.com/ (bouton "Get Your API Key")
-   2. Colle ta clé ci-dessous entre les guillemets
-   Sans clé : quota anonyme très bas → les flux en fin de liste (Qualiopi, IA) échouent silencieusement.
-   Avec clé gratuite : 10 000 requêtes/jour, largement suffisant pour 66 flux. */
-const RSS2JSON_API_KEY="m3bh1uwyao83ewcyiwjleu82z5emozw0vs7hcwgb";
-
-const CACHE_TTL_MS=45*60*1000; // 45 min : évite de re-solliciter l'API à chaque visite
-const CACHE_PREFIX="veille_cache_v2_";
-
 let allItems=[];
 let currentFilter='';
 let failedFeeds=[]; // {name, peri, reason}
+let feedsGeneratedAt=null;
+let feedsDataLoaded=false;
 
-function getCache(feed){
+/* ══════ CHARGEMENT DEPUIS feeds.json (généré 1x/jour par GitHub Actions) ══════ */
+async function loadFeedsData(){
+  if(feedsDataLoaded)return;
+  feedsDataLoaded=true;
+  const container=document.getElementById('flux-container');
   try{
-    const raw=localStorage.getItem(CACHE_PREFIX+feed.url);
-    if(!raw)return null;
-    const parsed=JSON.parse(raw);
-    if(Date.now()-parsed.ts>CACHE_TTL_MS)return null;
-    return parsed.items;
-  }catch(e){return null;}
-}
-function setCache(feed,items){
-  try{localStorage.setItem(CACHE_PREFIX+feed.url,JSON.stringify({ts:Date.now(),items}));}catch(e){}
-}
-function getStaleCache(feed){
-  try{
-    const raw=localStorage.getItem(CACHE_PREFIX+feed.url);
-    if(!raw)return null;
-    return JSON.parse(raw).items;
-  }catch(e){return null;}
-}
-
-function sleep(ms){return new Promise(res=>setTimeout(res,ms));}
-
-/* ══════ FETCH ══════ */
-async function loadOneFeed(feed,isRetry){
-  const cached=getCache(feed);
-  if(cached)return cached;
-  const api='https://api.rss2json.com/v1/api.json?rss_url=';
-  const keyParam=RSS2JSON_API_KEY?('&api_key='+encodeURIComponent(RSS2JSON_API_KEY)):'';
-  const ctrl=new AbortController();
-  const t=setTimeout(()=>ctrl.abort(),10000);
-  try{
-    const r=await fetch(api+encodeURIComponent(feed.url)+keyParam,{signal:ctrl.signal});
-    clearTimeout(t);
-    if(r.status===429&&!isRetry){
-      // Trop de requêtes trop vite : on patiente largement plus qu'une minute puis on retente une fois
-      await sleep(15000);
-      return loadOneFeed(feed,true);
-    }
-    if(!r.ok){
-      let detail='HTTP '+r.status;
-      try{
-        const body=await r.text();
-        const parsed=JSON.parse(body);
-        if(parsed.message)detail+=' — '+parsed.message;
-      }catch(e){}
-      failedFeeds.push({name:feed.name,peri:feed.peri,reason:detail});
-      const stale=getStaleCache(feed);
-      return stale||[];
-    }
+    const r=await fetch('feeds.json?_='+Date.now());
+    if(!r.ok)throw new Error('HTTP '+r.status);
     const d=await r.json();
-    if(d.status!=='ok'){
-      failedFeeds.push({name:feed.name,peri:feed.peri,reason:d.message||'quota/API rss2json'});
-      const stale=getStaleCache(feed);
-      return stale||[];
-    }
-    const items=(d.items||[]).slice(0,5).map(item=>{
-      const title=(item.title||'').trim();
-      const desc=(item.description||item.content||'').replace(/<[^>]+>/g,'').trim().slice(0,180);
-      return{title,link:(item.link||'').trim(),date:item.pubDate?item.pubDate.slice(0,10):'',
-        desc,source:feed.name,peri:feed.peri,...suggestPriorityWrap(title,desc)};
-    }).filter(item=>!isOffTopic(item.title+' '+item.desc));
-    setCache(feed,items);
-    return items;
+    allItems=d.items||[];
+    failedFeeds=d.failedFeeds||[];
+    feedsGeneratedAt=d.generatedAt||null;
   }catch(e){
-    clearTimeout(t);
-    failedFeeds.push({name:feed.name,peri:feed.peri,reason:e.name==='AbortError'?'délai dépassé (10s)':'erreur réseau'});
-    const stale=getStaleCache(feed);
-    return stale||[];
+    feedsDataLoaded=false;
+    container.innerHTML=`<div class="empty">Impossible de charger feeds.json (${e.message}). Vérifie qu'il existe bien à la racine du dépôt et que le workflow GitHub Actions a déjà tourné au moins une fois.</div>`;
+    return;
   }
-}
-
-const fluxLoadedPeri={vet:false,reg:false,ia:false};
-
-async function loadPeri(peri){
-  if(fluxLoadedPeri[peri])return;
-  fluxLoadedPeri[peri]=true;
-  const feeds=RSS_FEEDS.filter(f=>f.peri===peri);
-  const prog=document.getElementById('flux-progress');
-  const progFill=document.getElementById('flux-progress-fill');
-  const progLabel=document.getElementById('flux-progress-label');
-  prog.style.display='block';
-  const total=feeds.length;
-  const batch=1;
-  const pauseMs=13000; // 5 requêtes/minute max sur le plan gratuit rss2json → ~1 toutes les 12s + marge
-  for(let i=0;i<total;i+=batch){
-    const slice=feeds.slice(i,i+batch);
-    const results=await Promise.allSettled(slice.map(f=>loadOneFeed(f)));
-    results.forEach(r=>{if(r.status==='fulfilled')allItems.push(...r.value);});
-    progFill.style.width=Math.round(Math.min(i+batch,total)/total*100)+'%';
-    progLabel.textContent='Chargement '+PERI_LABEL[peri]+'… '+Math.min(i+batch,total)+'/'+total+' (≈13 sec/flux, merci de patienter)';
-    allItems.sort((a,b)=>b.date>a.date?1:-1);
-    updateCounts();
-    renderFlux(currentFilter);
-    if(i+batch<total)await sleep(pauseMs);
-  }
-  prog.style.display='none';
   updateCounts();
   renderFlux(currentFilter);
   renderDiagnostics();
+  renderLastUpdate();
 }
 
-async function loadAllFeeds(){
-  // Charge les 3 périmètres l'un après l'autre (pas en même temps) pour respecter le quota rss2json
-  for(const peri of ['vet','reg','ia']){
-    if(!fluxLoadedPeri[peri])await loadPeri(peri);
-  }
+function renderLastUpdate(){
+  const el=document.getElementById('flux-last-update');
+  if(!el)return;
+  el.textContent=feedsGeneratedAt?('Dernière mise à jour des flux : '+new Date(feedsGeneratedAt).toLocaleString('fr-FR')):'';
 }
 
 function renderDiagnostics(){
@@ -478,10 +351,9 @@ function renderDiagnostics(){
   if(!box)return;
   if(!failedFeeds.length){box.style.display='none';box.innerHTML='';return;}
   box.style.display='block';
-  const noKeyHint=RSS2JSON_API_KEY?'':' — pense à ajouter ta clé API rss2json (voir haut du script) si beaucoup de flux échouent, souvent un quota anonyme dépassé.';
   box.innerHTML=`<div class="notice" style="border-left-color:var(--danger-text)">
     <i class="ti ti-alert-triangle"></i>
-    <span><strong>${failedFeeds.length} flux n'ont pas pu être chargés${noKeyHint}</strong>
+    <span><strong>${failedFeeds.length} flux n'ont pas pu être chargés lors de la dernière mise à jour automatique</strong>
     <details style="margin-top:6px"><summary style="cursor:pointer">Voir le détail</summary>
     <div style="margin-top:6px">${failedFeeds.map(f=>`<div style="padding:2px 0">${PERI_LABEL[f.peri]||f.peri} — ${f.name} <span style="color:var(--text3)">(${f.reason})</span></div>`).join('')}</div>
     </details></span>
@@ -499,12 +371,7 @@ function filterFlux(peri,btn){
   currentFilter=peri;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  if(peri){
-    if(!fluxLoadedPeri[peri])loadPeri(peri);
-  }else{
-    // Onglet "Tous" : charge les périmètres pas encore chargés, l'un après l'autre
-    loadAllFeeds();
-  }
+  loadFeedsData();
   renderFlux(peri);
 }
 
