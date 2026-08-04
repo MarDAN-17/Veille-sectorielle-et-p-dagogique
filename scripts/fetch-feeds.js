@@ -76,7 +76,8 @@ const RSS_FEEDS = [
 const PRIORITY_HIGH=["délégation d'acte","délégation d'actes","actes délégués","acte délégué","gipsa","titre asv",
   "asv gipsa","qualiopi","rncp","certification professionnelle","loi d'orientation agricole","convention collective",
   "échelon 5","opco ep","cqp","apprentissage vétérinaire","alternance vétérinaire","délégués du snvel","habilitation",
-  "centre de formation habilité","jury national","manuel de formation aux actes"];
+  "centre de formation habilité","jury national","manuel de formation aux actes","n'ayant pas la qualité de vétérinaire",
+  "qualité de vétérinaire","actes de médecine ou de chirurgie des animaux","arrêté du 5 octobre 2011"];
 const PRIORITY_MED=["france compétences","vademecum","centre inffo","vae ","validation des acquis",
   "formation continue","ingénierie pédagogique","référentiel","évaluation certificative","mentorat vétérinaire",
   "bien-être animal","santé publique vétérinaire","droit de la formation","réforme de la formation","apprentissage",
@@ -116,6 +117,27 @@ const EXCLUDE_KEYWORDS=["patron de couture","couture","slow fashion","habillemen
 function isOffTopic(text){
   const low=text.toLowerCase();
   return EXCLUDE_KEYWORDS.some(k=>low.includes(k));
+}
+
+/* Sources génériques/grand public dont le contenu n'est pas fiablement filtré à la source
+   (moteur de recherche trop large, périmètre ministériel trop vaste...). Pour celles-ci,
+   on inverse la logique : on ne garde un article QUE s'il contient vraiment un terme du
+   champ vétérinaire/formation. Les autres sources (blogs spécialisés, etc.) restent en liste noire. */
+const WHITELIST_SOURCES=["Légifrance — Vétérinaire","Légifrance — Santé animale","Légifrance — Médecine vétérinaire",
+  "Légifrance — Pharmacovigilance","Légifrance — Médicament vétérinaire","Légifrance — Bien-être animal",
+  "Légifrance — Protection animale","Légifrance — Élevage","Légifrance — Alimentation animale",
+  "Min. Agriculture","Min. Agriculture Presse","Min. Agriculture Publications"];
+
+const TOPIC_WHITELIST=["vétérinaire","vétérinaires","animal","animaux","animale","élevage","éleveur","élevages",
+  "sanitaire","zoosanitaire","épizootie","épizootique","bien-être animal","abattage","abattoir","cheptel",
+  "santé animale","médicament vétérinaire","pharmacovigilance vétérinaire","asv","auxiliaire spécialisé",
+  "clinique vétérinaire","chirurgie des animaux","médecine des animaux","protection animale","faune",
+  "espèce animale","biosécurité","maladie animale","pathologie animale"];
+
+function passesWhitelist(sourceName,text){
+  if(!WHITELIST_SOURCES.includes(sourceName))return true; // pas concerné : pas de filtre supplémentaire
+  const low=text.toLowerCase();
+  return TOPIC_WHITELIST.some(k=>low.includes(k));
 }
 
 /* Certaines sources mélangent des articles de blog avec des pages de catalogue/offres de
@@ -187,7 +209,7 @@ async function run(){
         const date=item.isoDate?item.isoDate.slice(0,10):(item.pubDate?new Date(item.pubDate).toISOString().slice(0,10):'');
         const p=suggestPriority(title+' '+desc,feed.name,feed.peri);
         return{title,link:(item.link||'').trim(),date,desc,source:feed.name,peri:feed.peri,sugUrg:p.urg,sugImpact:p.impact};
-      }).filter(it=>!isOffTopic(it.title+' '+it.desc)&&!isSkippedLink(feed.name,it.link));
+      }).filter(it=>!isOffTopic(it.title+' '+it.desc)&&!isSkippedLink(feed.name,it.link)&&passesWhitelist(feed.name,it.title+' '+it.desc));
       allItems.push(...items);
       console.log(`✔ ${feed.name} (${items.length} articles)`);
     }catch(e){
