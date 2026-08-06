@@ -196,8 +196,46 @@ async function fetchWithFallback(url){
   }
 }
 
+const FEEDS_JSON_PATH=path.join(__dirname,'..','feeds.json');
+
+const RETENTION_DAYS={Haute:21,Moyenne:14,Basse:5};
+
+function loadExistingItems(){
+  try{
+    const raw=fs.readFileSync(FEEDS_JSON_PATH,'utf8');
+    const parsed=JSON.parse(raw);
+    return Array.isArray(parsed.items)?parsed.items:[];
+  }catch(e){
+    return []; // premier passage, ou fichier absent/corrompu : on repart de zéro
+  }
+}
+
+function mergeWithRetention(existingItems,freshItems){
+  const now=Date.now();
+  const byLink=new Map();
+  // On garde les articles déjà connus, en fixant leur date de première apparition si elle manque encore.
+  for(const it of existingItems){
+    if(!it.link)continue;
+    byLink.set(it.link,{...it,firstSeen:it.firstSeen||now});
+  }
+  // On superpose les articles récupérés aujourd'hui : priorité recalculée à jour,
+  // mais on conserve la date de première apparition d'origine pour ne pas relancer son compteur de rétention.
+  for(const it of freshItems){
+    const prev=byLink.get(it.link);
+    byLink.set(it.link,{...it,firstSeen:prev&&prev.firstSeen?prev.firstSeen:now});
+  }
+  // On ne garde que ce qui est encore dans sa fenêtre de rétention (selon la priorité du jour)
+  const kept=[];
+  for(const it of byLink.values()){
+    const days=RETENTION_DAYS[it.sugUrg]??RETENTION_DAYS.Basse;
+    const ageDays=(now-it.firstSeen)/(1000*60*60*24);
+    if(ageDays<=days)kept.push(it);
+  }
+  return kept;
+}
+
 async function run(){
-  const allItems=[];
+  const freshItems=[];
   const failedFeeds=[];
 
   for(const feed of RSS_FEEDS){
@@ -210,7 +248,7 @@ async function run(){
         const p=suggestPriority(title+' '+desc,feed.name,feed.peri);
         return{title,link:(item.link||'').trim(),date,desc,source:feed.name,peri:feed.peri,sugUrg:p.urg,sugImpact:p.impact};
       }).filter(it=>!isOffTopic(it.title+' '+it.desc)&&!isSkippedLink(feed.name,it.link)&&passesWhitelist(feed.name,it.title+' '+it.desc));
-      allItems.push(...items);
+      freshItems.push(...items);
       console.log(`✔ ${feed.name} (${items.length} articles)`);
     }catch(e){
       failedFeeds.push({name:feed.name,peri:feed.peri,reason:(e.message||'erreur inconnue').slice(0,200)});
@@ -218,6 +256,8 @@ async function run(){
     }
   }
 
+  const existingItems=loadExistingItems();
+  const allItems=mergeWithRetention(existingItems,freshItems);
   allItems.sort((a,b)=>b.date>a.date?1:-1);
 
   const output={
@@ -227,8 +267,8 @@ async function run(){
     failedFeeds
   };
 
-  fs.writeFileSync(path.join(__dirname,'..','feeds.json'),JSON.stringify(output));
-  console.log(`\nTerminé : ${allItems.length} articles récupérés, ${failedFeeds.length} flux en échec sur ${RSS_FEEDS.length}.`);
+  fs.writeFileSync(FEEDS_JSON_PATH,JSON.stringify(output));
+  console.log(`\nTerminé : ${allItems.length} articles en mémoire (dont ${freshItems.length} récupérés aujourd'hui), ${failedFeeds.length} flux en échec sur ${RSS_FEEDS.length}.`);
 }
 
 run().then(()=>process.exit(0)).catch(e=>{console.error(e);process.exit(1);});
