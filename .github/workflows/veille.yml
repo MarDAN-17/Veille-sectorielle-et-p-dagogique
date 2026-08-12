@@ -13,12 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Récupérer le dépôt
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Installer Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Installer les dépendances
         run: npm install
@@ -32,4 +32,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add feeds.json
           git diff --staged --quiet || git commit -m "Mise à jour automatique des flux ($(date -u +%Y-%m-%dT%H:%M:%SZ))"
+          git pull --rebase origin main
           git push
