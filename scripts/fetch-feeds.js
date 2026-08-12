@@ -28,13 +28,10 @@ const RSS_FEEDS = [
   {url:"https://agriculture.gouv.fr/rss_presse.xml",name:"Min. Agriculture Presse",peri:"vet"},
   {url:"https://agriculture.gouv.fr/rss_publications.xml",name:"Min. Agriculture Publications",peri:"vet"},
   {url:"https://www.cnr-bea.fr/feed/",name:"CNR Bien-être animal",peri:"vet"},
-  {url:"https://politepaul.com/fd/Sl0EJiEDNO0I.xml",name:"SNVEL",peri:"vet"},
-  {url:"https://politepaul.com/fd/uX37KPJnmGcM.xml",name:"La Dépêche Vétérinaire",peri:"vet"},
-  {url:"https://politepaul.com/fd/RuwLjHjft5QV.xml",name:"Le Point Vétérinaire — Actualités ASV",peri:"vet"},
-  {url:"https://politepaul.com/fd/AQNBMqFQ9bNk.xml",name:"Le Point Vétérinaire — Actualité",peri:"vet"},
-  {url:"https://politepaul.com/fd/RVqPOiISums0.xml",name:"Le Point Vétérinaire — Pratique",peri:"vet"},
-  {url:"https://politepaul.com/fd/E5PsDaLovKg2.xml",name:"Le Point Vétérinaire — Aide à la gestion",peri:"vet"},
-  {url:"https://politepaul.com/fd/nnyoTExSaTTA.xml",name:"Le Point Vétérinaire — Vidéos",peri:"vet"},
+  {url:"https://politepaul.com/fd/sL854Xcwyz27.xml",name:"Le Point Vétérinaire — ASV",peri:"vet"},
+  {url:"https://politepaul.com/fd/GpPwctzDNXOC.xml",name:"Le Point Vétérinaire — Actualités",peri:"vet"},
+  {url:"https://politepaul.com/fd/aJmDf0JHivkJ.xml",name:"Le Point Vétérinaire — Pratique",peri:"vet"},
+  // SNVEL, La Dépêche Vétérinaire : retirés temporairement (flux PolitePaul à refaire proprement)
   {url:"https://legifrss.org/latest?q=v%C3%A9t%C3%A9rinaire",name:"Légifrance — Vétérinaire",peri:"vet"},
   {url:"https://legifrss.org/latest?q=sant%C3%A9%20animale",name:"Légifrance — Santé animale",peri:"vet"},
   {url:"https://legifrss.org/latest?q=m%C3%A9decine%20v%C3%A9t%C3%A9rinaire",name:"Légifrance — Médecine vétérinaire",peri:"vet"},
@@ -57,7 +54,7 @@ const RSS_FEEDS = [
   {url:"https://www.centre-inffo.fr/category/innovation-formation/feed",name:"Centre Inffo — Innovation",peri:"reg"},
   {url:"https://lesacteursdelacompetence.fr/feed/",name:"Les Acteurs Compétence",peri:"reg"},
   {url:"https://www.veilleformation.com/feed",name:"Veille Formation",peri:"reg"},
-  {url:"https://politepaul.com/fd/PwUzHjGhk2nO.xml",name:"OPCO EP",peri:"reg"},
+  // OPCO EP : retiré temporairement (flux PolitePaul à refaire proprement)
   /* PÉDAGOGIE */
   {url:"https://ainoa-asso.fr/feed/",name:"AINOA",peri:"ped"},
   {url:"https://portaileduc.net/website/feed/",name:"PortailEduc",peri:"ped"},
@@ -71,8 +68,7 @@ const RSS_FEEDS = [
   {url:"https://lepodcastdelaformation.fr/feed/",name:"Podcast de la Formation",peri:"ped"},
   {url:"https://feeds.podcastics.com/podcastics/podcasts/rss/6628_a9c72191f50b205a6ebe0276fb677e8f.rss",name:"Véto Actu (Podcast)",peri:"vet"},
   {url:"https://blogs.articulate.com/les-essentiels-du-elearning/feed/",name:"Blog Articulate",peri:"ped"},
-  {url:"https://politepaul.com/fd/6wFII7ubQDyN.xml",name:"Blog MyVirtualClassroom",peri:"ped"},
-  {url:"https://politepaul.com/fd/Jmgg1YxU5b9R.xml",name:"RDV en terre digitale",peri:"ped"},
+  // Blog MyVirtualClassroom, RDV en terre digitale : retirés temporairement (flux PolitePaul à refaire proprement)
   {url:"https://www.digiformag.com/feed/",name:"Digiformag",peri:"ped"},
   {url:"https://legifrss.org/latest?q=accessibilit%C3%A9%20num%C3%A9rique",name:"Légifrance — Accessibilité numérique",peri:"ped"},
   /* INTELLIGENCE ARTIFICIELLE */
