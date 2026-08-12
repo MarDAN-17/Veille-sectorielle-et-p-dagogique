@@ -57,7 +57,7 @@ const RSS_FEEDS = [
   {url:"https://www.centre-inffo.fr/category/innovation-formation/feed",name:"Centre Inffo — Innovation",peri:"reg"},
   {url:"https://lesacteursdelacompetence.fr/feed/",name:"Les Acteurs Compétence",peri:"reg"},
   {url:"https://www.veilleformation.com/feed",name:"Veille Formation",peri:"reg"},
-  // OPCO EP : en attente d'un flux de remplacement (rss.app à 402, aucun flux natif trouvé sur opcoep.fr)
+  {url:"https://politepaul.com/fd/PwUzHjGhk2nO.xml",name:"OPCO EP",peri:"reg"},
   /* PÉDAGOGIE */
   {url:"https://ainoa-asso.fr/feed/",name:"AINOA",peri:"ped"},
   {url:"https://portaileduc.net/website/feed/",name:"PortailEduc",peri:"ped"},
