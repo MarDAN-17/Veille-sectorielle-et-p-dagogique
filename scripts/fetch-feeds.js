@@ -7,7 +7,11 @@ const Parser = require('rss-parser');
 const fs = require('fs');
 const path = require('path');
 
-const parser = new Parser({ timeout: 15000 });
+const parser = new Parser({
+  timeout: 15000,
+  headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36' }
+});
+const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
 /* ══════ LISTE DES FLUX (identique à l'ancien RSS_FEEDS d'index.html) ══════ */
 const RSS_FEEDS = [
@@ -24,9 +28,13 @@ const RSS_FEEDS = [
   {url:"https://agriculture.gouv.fr/rss_presse.xml",name:"Min. Agriculture Presse",peri:"vet"},
   {url:"https://agriculture.gouv.fr/rss_publications.xml",name:"Min. Agriculture Publications",peri:"vet"},
   {url:"https://www.cnr-bea.fr/feed/",name:"CNR Bien-être animal",peri:"vet"},
-  {url:"https://rss.app/feeds/ms3IMBpi8WOtq4o7.xml",name:"SNVEL",peri:"vet"},
-  {url:"https://rss.app/feeds/hZ6uwoVUoNLK1dsf.xml",name:"La Dépêche Vétérinaire",peri:"vet"},
-  {url:"https://rss.app/feeds/PceSswzMXGRPvei0.xml",name:"Le Point Vétérinaire",peri:"vet"},
+  {url:"https://politepaul.com/fd/Sl0EJiEDNO0I.xml",name:"SNVEL",peri:"vet"},
+  {url:"https://politepaul.com/fd/uX37KPJnmGcM.xml",name:"La Dépêche Vétérinaire",peri:"vet"},
+  {url:"https://politepaul.com/fd/RuwLjHjft5QV.xml",name:"Le Point Vétérinaire — Actualités ASV",peri:"vet"},
+  {url:"https://politepaul.com/fd/AQNBMqFQ9bNk.xml",name:"Le Point Vétérinaire — Actualité",peri:"vet"},
+  {url:"https://politepaul.com/fd/RVqPOiISums0.xml",name:"Le Point Vétérinaire — Pratique",peri:"vet"},
+  {url:"https://politepaul.com/fd/E5PsDaLovKg2.xml",name:"Le Point Vétérinaire — Aide à la gestion",peri:"vet"},
+  {url:"https://politepaul.com/fd/nnyoTExSaTTA.xml",name:"Le Point Vétérinaire — Vidéos",peri:"vet"},
   {url:"https://legifrss.org/latest?q=v%C3%A9t%C3%A9rinaire",name:"Légifrance — Vétérinaire",peri:"vet"},
   {url:"https://legifrss.org/latest?q=sant%C3%A9%20animale",name:"Légifrance — Santé animale",peri:"vet"},
   {url:"https://legifrss.org/latest?q=m%C3%A9decine%20v%C3%A9t%C3%A9rinaire",name:"Légifrance — Médecine vétérinaire",peri:"vet"},
@@ -49,7 +57,7 @@ const RSS_FEEDS = [
   {url:"https://www.centre-inffo.fr/category/innovation-formation/feed",name:"Centre Inffo — Innovation",peri:"reg"},
   {url:"https://lesacteursdelacompetence.fr/feed/",name:"Les Acteurs Compétence",peri:"reg"},
   {url:"https://www.veilleformation.com/feed",name:"Veille Formation",peri:"reg"},
-  {url:"https://rss.app/feeds/dFVbEbdCTARlNGNm.xml",name:"OPCO EP",peri:"reg"},
+  // OPCO EP : en attente d'un flux de remplacement (rss.app à 402, aucun flux natif trouvé sur opcoep.fr)
   /* PÉDAGOGIE */
   {url:"https://ainoa-asso.fr/feed/",name:"AINOA",peri:"ped"},
   {url:"https://portaileduc.net/website/feed/",name:"PortailEduc",peri:"ped"},
@@ -59,12 +67,12 @@ const RSS_FEEDS = [
   {url:"https://www.istf-formation.fr/feed/",name:"ISTF",peri:"ped"},
   {url:"https://feeds.feedburner.com/elearningindustry",name:"eLearning Industry",peri:"ped"},
   {url:"https://www.letudiant.fr/educpros/rss.xml",name:"Educpros",peri:"ped"},
-  {url:"https://journals.openedition.org/feed.php",name:"Distances & Médiations",peri:"ped"},
+  {url:"https://journals.openedition.org/dms/backend?format=rssdocuments",name:"Distances & Médiations",peri:"ped"},
   {url:"https://lepodcastdelaformation.fr/feed/",name:"Podcast de la Formation",peri:"ped"},
-  {url:"https://feeds.podcastics.com/podcastics/podcasts/rss/6628_a9c72191f50b205a6ebe0276fb677e8f.rss",name:"Podcast Formation Pro",peri:"ped"},
-  {url:"https://rss.app/feeds/pwLs2q5Qei1xfnGG.xml",name:"Blog Articulate",peri:"ped"},
-  {url:"https://rss.app/feeds/esKG9cZhHIbFAZVl.xml",name:"Blog MyVirtualClassroom",peri:"ped"},
-  {url:"https://rss.app/feeds/zdAHoPpGZHrQhHoq.xml",name:"RDV en terre digitale",peri:"ped"},
+  {url:"https://feeds.podcastics.com/podcastics/podcasts/rss/6628_a9c72191f50b205a6ebe0276fb677e8f.rss",name:"Véto Actu (Podcast)",peri:"vet"},
+  {url:"https://blogs.articulate.com/les-essentiels-du-elearning/feed/",name:"Blog Articulate",peri:"ped"},
+  {url:"https://politepaul.com/fd/6wFII7ubQDyN.xml",name:"Blog MyVirtualClassroom",peri:"ped"},
+  {url:"https://politepaul.com/fd/Jmgg1YxU5b9R.xml",name:"RDV en terre digitale",peri:"ped"},
   {url:"https://www.digiformag.com/feed/",name:"Digiformag",peri:"ped"},
   {url:"https://legifrss.org/latest?q=accessibilit%C3%A9%20num%C3%A9rique",name:"Légifrance — Accessibilité numérique",peri:"ped"},
   /* INTELLIGENCE ARTIFICIELLE */
@@ -89,10 +97,12 @@ const RSS_FEEDS = [
 
 /* ══════ PRIORITÉ SUGGÉRÉE — modèle à points cumulables ══════ */
 const PRIORITY_HIGH=["délégation d'acte","délégation d'actes","actes délégués","acte délégué","gipsa","titre asv",
-  "asv gipsa","qualiopi","rncp","certification professionnelle","loi d'orientation agricole","convention collective",
+  "asv gipsa","qualiopi","rncp","certification professionnelle","loi d'orientation agricole",
   "échelon 5","opco ep","cqp","apprentissage vétérinaire","alternance vétérinaire","délégués du snvel","habilitation",
   "centre de formation habilité","jury national","manuel de formation aux actes","n'ayant pas la qualité de vétérinaire",
-  "qualité de vétérinaire","actes de médecine ou de chirurgie des animaux","arrêté du 5 octobre 2011"];
+  "qualité de vétérinaire","actes de médecine ou de chirurgie des animaux","arrêté du 5 octobre 2011",
+  "convention collective des cabinets et cliniques vétérinaires","convention collective nationale des vétérinaires",
+  "convention collective vétérinaire","idcc 1875"];
 const PRIORITY_MED=["france compétences","vademecum","centre inffo","vae ","validation des acquis",
   "formation continue","ingénierie pédagogique","référentiel","évaluation certificative","mentorat vétérinaire",
   "bien-être animal","santé publique vétérinaire","droit de la formation","réforme de la formation","apprentissage",
@@ -176,13 +186,19 @@ function passesWhitelist(sourceName,text){
 /* Certaines sources mélangent des articles de blog avec des pages de catalogue/offres de
    formation dans leur flux RSS. On exclut ces pages-là par motif d'URL, source par source. */
 const SKIP_LINK_PATTERNS={
-  ISTF:["/formation/","/catalogue/"]
+  ISTF:["/formation/","/catalogue/","/atelier/","/cursus-certifiants/","/cpf/","/ia/","/deployez-vos-formations-et-animez-vos-dispositifs/"]
 };
 
 function isSkippedLink(sourceName,link){
   const patterns=SKIP_LINK_PATTERNS[sourceName];
   if(!patterns)return false;
   return patterns.some(p=>link.includes(p));
+}
+
+/* Filtre complémentaire, indépendant de l'URL : une page qui affiche un prix/tarif de stage
+   est presque toujours une fiche produit, jamais un article éditorial — quel que soit son chemin. */
+function looksLikeTrainingOffer(text){
+  return /(\d+\s?€\s?ht|inter-entreprises?\s*:|intra-entreprises?\s*:|tarifs?\s+sur\s+demande)/i.test(text);
 }
 
 function stripHtml(html){
@@ -211,7 +227,7 @@ async function fetchWithFallback(url){
   }catch(e1){
     // Repli niveau 1 : "&" isolés non échappés, cause fréquente sur les flux WordPress.
     try{
-      const res=await fetch(url);
+      const res=await fetch(url,{headers:{'User-Agent':BROWSER_UA}});
       if(!res.ok)throw e1;
       let text=await res.text();
       const fixedAmp=text.replace(/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-fA-F]+;)/g,'&amp;');
@@ -219,7 +235,7 @@ async function fetchWithFallback(url){
     }catch(e2){
       // Repli niveau 2 : XML structurellement cassé (balises mal fermées, imbrication invalide...).
       // On extrait les articles à la main par motif texte, sans passer par un parseur XML strict.
-      const res=await fetch(url);
+      const res=await fetch(url,{headers:{'User-Agent':BROWSER_UA}});
       if(!res.ok)throw e1;
       const text=await res.text();
       const manual=extractItemsWithRegex(text);
@@ -233,11 +249,17 @@ const FEEDS_JSON_PATH=path.join(__dirname,'..','feeds.json');
 
 const RETENTION_DAYS={Haute:21,Moyenne:14,Basse:5};
 
+const VALID_SOURCE_PERI=new Set(RSS_FEEDS.map(f=>f.name+'|'+f.peri));
+
 function loadExistingItems(){
   try{
     const raw=fs.readFileSync(FEEDS_JSON_PATH,'utf8');
     const parsed=JSON.parse(raw);
-    return Array.isArray(parsed.items)?parsed.items:[];
+    const items=Array.isArray(parsed.items)?parsed.items:[];
+    // Auto-nettoyage : si le couple (source, périmètre) d'un article ne correspond plus
+    // à aucune entrée valide de RSS_FEEDS (ex: recatégorisation, code de périmètre réutilisé
+    // pour autre chose), on l'écarte plutôt que de le laisser traîner avec une étiquette fausse.
+    return items.filter(it=>VALID_SOURCE_PERI.has(it.source+'|'+it.peri));
   }catch(e){
     return []; // premier passage, ou fichier absent/corrompu : on repart de zéro
   }
@@ -281,7 +303,7 @@ async function run(){
         const date=item.isoDate?item.isoDate.slice(0,10):(item.pubDate?new Date(item.pubDate).toISOString().slice(0,10):'');
         const p=suggestPriority(title+' '+desc,feed.name,feed.peri);
         return{title,link:(item.link||'').trim(),date,desc,source:feed.name,peri:feed.peri,sugUrg:p.urg,sugImpact:p.impact};
-      }).filter(it=>!isOffTopic(it.title+' '+it.desc)&&!isSkippedLink(feed.name,it.link)&&passesWhitelist(feed.name,it.title+' '+it.desc));
+      }).filter(it=>!isOffTopic(it.title+' '+it.desc)&&!isSkippedLink(feed.name,it.link)&&!looksLikeTrainingOffer(it.desc)&&passesWhitelist(feed.name,it.title+' '+it.desc));
       freshItems.push(...items);
       console.log(`✔ ${feed.name} (${items.length} articles)`);
     }catch(e){
