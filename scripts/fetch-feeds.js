@@ -50,25 +50,40 @@ const RSS_FEEDS = [
   {url:"https://lesacteursdelacompetence.fr/feed/",name:"Les Acteurs Compétence",peri:"reg"},
   {url:"https://www.veilleformation.com/feed",name:"Veille Formation",peri:"reg"},
   {url:"https://rss.app/feeds/dFVbEbdCTARlNGNm.xml",name:"OPCO EP",peri:"reg"},
-  /* IA & PÉDAGOGIE */
-  {url:"https://ainoa-asso.fr/feed/",name:"AINOA",peri:"ia"},
-  {url:"https://portaileduc.net/website/feed/",name:"PortailEduc",peri:"ia"},
-  {url:"https://sydologie.com/feed",name:"Sydologie",peri:"ia"},
-  {url:"https://latelierduformateur.fr/feed/",name:"L'Atelier du Formateur",peri:"ia"},
-  {url:"https://outilstice.com/feed/",name:"Les Outils Tice",peri:"ia"},
-  {url:"https://www.istf-formation.fr/feed/",name:"ISTF",peri:"ia"},
-  {url:"https://feeds.feedburner.com/elearningindustry",name:"eLearning Industry",peri:"ia"},
-  {url:"https://www.letudiant.fr/educpros/rss.xml",name:"Educpros",peri:"ia"},
-  {url:"https://journals.openedition.org/feed.php",name:"Distances & Médiations",peri:"ia"},
-  {url:"https://lepodcastdelaformation.fr/feed/",name:"Podcast de la Formation",peri:"ia"},
+  /* PÉDAGOGIE */
+  {url:"https://ainoa-asso.fr/feed/",name:"AINOA",peri:"ped"},
+  {url:"https://portaileduc.net/website/feed/",name:"PortailEduc",peri:"ped"},
+  {url:"https://sydologie.com/feed",name:"Sydologie",peri:"ped"},
+  {url:"https://latelierduformateur.fr/feed/",name:"L'Atelier du Formateur",peri:"ped"},
+  {url:"https://outilstice.com/feed/",name:"Les Outils Tice",peri:"ped"},
+  {url:"https://www.istf-formation.fr/feed/",name:"ISTF",peri:"ped"},
+  {url:"https://feeds.feedburner.com/elearningindustry",name:"eLearning Industry",peri:"ped"},
+  {url:"https://www.letudiant.fr/educpros/rss.xml",name:"Educpros",peri:"ped"},
+  {url:"https://journals.openedition.org/feed.php",name:"Distances & Médiations",peri:"ped"},
+  {url:"https://lepodcastdelaformation.fr/feed/",name:"Podcast de la Formation",peri:"ped"},
+  {url:"https://feeds.podcastics.com/podcastics/podcasts/rss/6628_a9c72191f50b205a6ebe0276fb677e8f.rss",name:"Podcast Formation Pro",peri:"ped"},
+  {url:"https://rss.app/feeds/pwLs2q5Qei1xfnGG.xml",name:"Blog Articulate",peri:"ped"},
+  {url:"https://rss.app/feeds/esKG9cZhHIbFAZVl.xml",name:"Blog MyVirtualClassroom",peri:"ped"},
+  {url:"https://rss.app/feeds/zdAHoPpGZHrQhHoq.xml",name:"RDV en terre digitale",peri:"ped"},
+  {url:"https://www.digiformag.com/feed/",name:"Digiformag",peri:"ped"},
+  {url:"https://legifrss.org/latest?q=accessibilit%C3%A9%20num%C3%A9rique",name:"Légifrance — Accessibilité numérique",peri:"ped"},
+  /* INTELLIGENCE ARTIFICIELLE */
+  {url:"https://feeds.feedburner.com/elearningindustry",name:"eLearning Industry",peri:"ia"}, // doublon volontaire : article pertinent pour les deux périmètres
   {url:"https://blog.google/rss",name:"Google Blog",peri:"ia"},
   {url:"https://openai.com/news/rss.xml",name:"OpenAI Blog",peri:"ia"},
   {url:"https://towardsdatascience.com/feed/",name:"Towards Data Science",peri:"ia"},
-  {url:"https://feeds.podcastics.com/podcastics/podcasts/rss/6628_a9c72191f50b205a6ebe0276fb677e8f.rss",name:"Podcast Formation Pro",peri:"ia"},
-  {url:"https://rss.app/feeds/pwLs2q5Qei1xfnGG.xml",name:"Blog Articulate",peri:"ia"},
-  {url:"https://rss.app/feeds/esKG9cZhHIbFAZVl.xml",name:"Blog MyVirtualClassroom",peri:"ia"},
-  {url:"https://rss.app/feeds/zdAHoPpGZHrQhHoq.xml",name:"RDV en terre digitale",peri:"ia"},
-  {url:"https://www.digiformag.com/feed/",name:"Digiformag",peri:"ia"},
+  {url:"https://theophileburnet.substack.com/feed",name:"Théophile Burnet",peri:"ia"},
+  {url:"https://optimia.substack.com/feed",name:"OptimIA",peri:"ia"},
+  {url:"https://www.upmynt.com/rss/",name:"Upmynt",peri:"ia"},
+  {url:"https://intelligence-artificielle.com/feed/",name:"Intelligence-Artificielle.com",peri:"ia"},
+  {url:"https://www.blogdumoderateur.com/feed/",name:"Blog du Modérateur",peri:"ia"},
+  {url:"https://techcrunch.com/category/artificial-intelligence/feed/",name:"TechCrunch — IA",peri:"ia"},
+  {url:"https://legifrss.org/latest?q=intelligence%20artificielle",name:"Légifrance — IA",peri:"ia"},
+  /* RÉGLEMENTATION / QUALIOPI — compléments Légifrance */
+  {url:"https://legifrss.org/latest?q=qualiopi",name:"Légifrance — Qualiopi",peri:"reg"},
+  {url:"https://legifrss.org/latest?q=tra%C3%A7abilit%C3%A9%20des%20actions%20de%20formation",name:"Légifrance — Traçabilité formation",peri:"reg"},
+  {url:"https://legifrss.org/latest?q=formation%20%C3%A0%20distance",name:"Légifrance — FOAD",peri:"reg"},
+  {url:"https://legifrss.org/latest?q=protection%20des%20donn%C3%A9es",name:"Légifrance — RGPD formation",peri:"reg"},
   {url:"https://www.certif-avenir.fr/blog-feed.xml",name:"Certif Avenir",peri:"reg"},
 ];
 
@@ -81,7 +96,8 @@ const PRIORITY_HIGH=["délégation d'acte","délégation d'actes","actes délég
 const PRIORITY_MED=["france compétences","vademecum","centre inffo","vae ","validation des acquis",
   "formation continue","ingénierie pédagogique","référentiel","évaluation certificative","mentorat vétérinaire",
   "bien-être animal","santé publique vétérinaire","droit de la formation","réforme de la formation","apprentissage",
-  "apprenti","apprentis","contrat d'apprentissage","premier équipement","financement formation","financement des apprentis"];
+  "apprenti","apprentis","contrat d'apprentissage","premier équipement","financement formation","financement des apprentis",
+  "traçabilité des actions de formation","accessibilité numérique","rgaa","intelligence artificielle","ia générative"];
 const PRIORITY_LOW=["canicule","sécheresse","engrais","haie","pfas","eau potable","phytosanitaire","safer",
   "label rouge","crevette","nématode"];
 
@@ -91,7 +107,8 @@ const SOURCE_PRIORITY={
   reg:["OPCO EP","France Compétences","France Compétences RSS","Centre Inffo","Centre Inffo — Quotidien",
     "Centre Inffo — Réforme","Centre Inffo — Droit formation","Centre Inffo — Régions","Centre Inffo — Europe",
     "Centre Inffo — Innovation"],
-  ia:["AINOA","Sydologie","Podcast de la Formation","L'Atelier du Formateur"]
+  ped:["AINOA","Sydologie","Podcast de la Formation","L'Atelier du Formateur"],
+  ia:["OpenAI Blog"]
 };
 
 function countMatches(text,list){
@@ -120,24 +137,40 @@ function isOffTopic(text){
 }
 
 /* Sources génériques/grand public dont le contenu n'est pas fiablement filtré à la source
-   (moteur de recherche trop large, périmètre ministériel trop vaste...). Pour celles-ci,
-   on inverse la logique : on ne garde un article QUE s'il contient vraiment un terme du
-   champ vétérinaire/formation. Les autres sources (blogs spécialisés, etc.) restent en liste noire. */
-const WHITELIST_SOURCES=["Légifrance — Vétérinaire","Légifrance — Santé animale","Légifrance — Médecine vétérinaire",
-  "Légifrance — Pharmacovigilance","Légifrance — Médicament vétérinaire","Légifrance — Bien-être animal",
-  "Légifrance — Protection animale","Légifrance — Élevage","Légifrance — Alimentation animale",
-  "Min. Agriculture","Min. Agriculture Presse","Min. Agriculture Publications"];
-
-const TOPIC_WHITELIST=["vétérinaire","vétérinaires","animal","animaux","animale","élevage","éleveur","élevages",
+   (moteur de recherche trop large, périmètre ministériel trop vaste, média généraliste...).
+   Pour celles-ci, on inverse la logique : un article n'est gardé QUE s'il contient vraiment
+   un terme du champ concerné. Chaque source est associée au groupe de mots-clés pertinent. */
+const VET_TERMS=["vétérinaire","vétérinaires","animal","animaux","animale","élevage","éleveur","élevages",
   "sanitaire","zoosanitaire","épizootie","épizootique","bien-être animal","abattage","abattoir","cheptel",
   "santé animale","médicament vétérinaire","pharmacovigilance vétérinaire","asv","auxiliaire spécialisé",
   "clinique vétérinaire","chirurgie des animaux","médecine des animaux","protection animale","faune",
   "espèce animale","biosécurité","maladie animale","pathologie animale"];
 
+const FORMATION_TERMS=["formation professionnelle","organisme de formation","apprenant","apprenants","qualiopi",
+  "certification","référentiel","action de formation","actions de formation","stagiaire","prestataire de formation",
+  "apprentissage","alternance","centre de formation","formation continue","formation à distance","foad"];
+
+const IA_TERMS=["intelligence artificielle","ia générative","chatgpt","machine learning","modèle de langage",
+  "llm","openai","deepmind","algorithme d'ia","système d'ia","systèmes d'ia","ia à haut risque","règlement ia"];
+
+const WHITELIST_SOURCES={
+  "Légifrance — Vétérinaire":VET_TERMS,"Légifrance — Santé animale":VET_TERMS,
+  "Légifrance — Médecine vétérinaire":VET_TERMS,"Légifrance — Pharmacovigilance":VET_TERMS,
+  "Légifrance — Médicament vétérinaire":VET_TERMS,"Légifrance — Bien-être animal":VET_TERMS,
+  "Légifrance — Protection animale":VET_TERMS,"Légifrance — Élevage":VET_TERMS,
+  "Légifrance — Alimentation animale":VET_TERMS,
+  "Min. Agriculture":VET_TERMS,"Min. Agriculture Presse":VET_TERMS,"Min. Agriculture Publications":VET_TERMS,
+  "Légifrance — Qualiopi":FORMATION_TERMS,"Légifrance — Traçabilité formation":FORMATION_TERMS,
+  "Légifrance — FOAD":FORMATION_TERMS,"Légifrance — RGPD formation":FORMATION_TERMS,
+  "Légifrance — Accessibilité numérique":FORMATION_TERMS,
+  "Légifrance — IA":IA_TERMS,"Blog du Modérateur":IA_TERMS,
+};
+
 function passesWhitelist(sourceName,text){
-  if(!WHITELIST_SOURCES.includes(sourceName))return true; // pas concerné : pas de filtre supplémentaire
+  const terms=WHITELIST_SOURCES[sourceName];
+  if(!terms)return true; // pas concerné : pas de filtre supplémentaire
   const low=text.toLowerCase();
-  return TOPIC_WHITELIST.some(k=>low.includes(k));
+  return terms.some(k=>low.includes(k));
 }
 
 /* Certaines sources mélangent des articles de blog avec des pages de catalogue/offres de
@@ -212,21 +245,22 @@ function loadExistingItems(){
 
 function mergeWithRetention(existingItems,freshItems){
   const now=Date.now();
-  const byLink=new Map();
+  const byKey=new Map();
+  const keyOf=(it)=>it.link+'|'+it.peri; // même article, périmètres différents = entrées distinctes (ex: eLearning Industry en double)
   // On garde les articles déjà connus, en fixant leur date de première apparition si elle manque encore.
   for(const it of existingItems){
     if(!it.link)continue;
-    byLink.set(it.link,{...it,firstSeen:it.firstSeen||now});
+    byKey.set(keyOf(it),{...it,firstSeen:it.firstSeen||now});
   }
   // On superpose les articles récupérés aujourd'hui : priorité recalculée à jour,
   // mais on conserve la date de première apparition d'origine pour ne pas relancer son compteur de rétention.
   for(const it of freshItems){
-    const prev=byLink.get(it.link);
-    byLink.set(it.link,{...it,firstSeen:prev&&prev.firstSeen?prev.firstSeen:now});
+    const prev=byKey.get(keyOf(it));
+    byKey.set(keyOf(it),{...it,firstSeen:prev&&prev.firstSeen?prev.firstSeen:now});
   }
   // On ne garde que ce qui est encore dans sa fenêtre de rétention (selon la priorité du jour)
   const kept=[];
-  for(const it of byLink.values()){
+  for(const it of byKey.values()){
     const days=RETENTION_DAYS[it.sugUrg]??RETENTION_DAYS.Basse;
     const ageDays=(now-it.firstSeen)/(1000*60*60*24);
     if(ageDays<=days)kept.push(it);
