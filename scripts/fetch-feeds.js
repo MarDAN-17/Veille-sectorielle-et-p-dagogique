@@ -185,10 +185,28 @@ const SKIP_LINK_PATTERNS={
   ISTF:["/formation/","/catalogue/","/atelier/","/cursus-certifiants/","/cpf/","/ia/","/deployez-vos-formations-et-animez-vos-dispositifs/"]
 };
 
+/* Ces liens ne doivent être bloqués que s'ils correspondent EXACTEMENT à la page indiquée, pas à
+   leurs sous-pages : ce sont les tags/catégories du widget SNVEL (voir fetchSnvelListing), dont
+   les sous-pages sont de vrais articles à conserver (/communication/ = tag à exclure, mais
+   /communication/mon-article/ = vrai article à garder — d'où la distinction avec SKIP_LINK_PATTERNS
+   ci-dessus, qui bloque par sous-chaîne donc toute une arborescence). */
+const EXACT_SKIP_LINKS={
+  SNVEL:["enseignement-cursus","protection-sociale-et-juridique","medicament-veterinaire",
+    "qui-sommes-nous","communiques-de-presse","conseil-expertise","collaboration-liberale",
+    "gestion-management","communication","autres","bien-etre-animal","biodiversite",
+    "contentieux","covid-19","e-reputation","fiscalite","formation","juridique",
+    "maillage","one-health","sanitaire","social","ressources","se-connecter","actualites"]
+};
+
 function isSkippedLink(sourceName,link){
   const patterns=SKIP_LINK_PATTERNS[sourceName];
-  if(!patterns)return false;
-  return patterns.some(p=>link.includes(p));
+  if(patterns&&patterns.some(p=>link.includes(p)))return true;
+  const exact=EXACT_SKIP_LINKS[sourceName];
+  if(exact){
+    const m=link.match(/^https?:\/\/[^/]+\/([a-z0-9-]+)\/?$/i);
+    if(m&&exact.includes(m[1].toLowerCase()))return true;
+  }
+  return false;
 }
 
 /* Filtre complémentaire, indépendant de l'URL : une page qui affiche un prix/tarif de stage
@@ -354,6 +372,7 @@ function mergeWithRetention(existingItems,freshItems){
   // sinon un article mal classé peut rester avec son ancien score jusqu'à expiration de sa rétention.
   for(const it of existingItems){
     if(!it.link)continue;
+    if(isSkippedLink(it.source,it.link))continue; // purge immédiate des liens désormais exclus (ex: tags SNVEL), sans attendre l'expiration de rétention
     const p=suggestPriority((it.title||'')+' '+(it.desc||''),it.source,it.peri);
     byKey.set(keyOf(it),{...it,sugUrg:p.urg,sugImpact:p.impact,firstSeen:it.firstSeen||now});
   }
