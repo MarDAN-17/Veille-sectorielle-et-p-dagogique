@@ -28,7 +28,7 @@ const RSS_FEEDS = [
   {url:"https://agriculture.gouv.fr/rss_presse.xml",name:"Min. Agriculture Presse",peri:"vet"},
   {url:"https://agriculture.gouv.fr/rss_publications.xml",name:"Min. Agriculture Publications",peri:"vet"},
   {url:"https://www.cnr-bea.fr/feed/",name:"CNR Bien-être animal",peri:"vet"},
-  {url:"https://www.veterinaireliberal.fr/feed/",name:"SNVEL",peri:"vet"},
+  {url:"https://www.veterinaireliberal.fr/wp-json/wp/v2/posts?per_page=5",name:"SNVEL",peri:"vet",type:"wpjson"},
   {url:"https://legifrss.org/latest?q=v%C3%A9t%C3%A9rinaire",name:"Légifrance — Vétérinaire",peri:"vet"},
   {url:"https://legifrss.org/latest?q=sant%C3%A9%20animale",name:"Légifrance — Santé animale",peri:"vet"},
   {url:"https://legifrss.org/latest?q=m%C3%A9decine%20v%C3%A9t%C3%A9rinaire",name:"Légifrance — Médecine vétérinaire",peri:"vet"},
@@ -51,9 +51,8 @@ const RSS_FEEDS = [
   {url:"https://www.centre-inffo.fr/category/innovation-formation/feed",name:"Centre Inffo — Innovation",peri:"reg"},
   {url:"https://lesacteursdelacompetence.fr/feed/",name:"Les Acteurs Compétence",peri:"reg"},
   {url:"https://www.veilleformation.com/feed",name:"Veille Formation",peri:"reg"},
-  {url:"https://www.opcoep.fr/feed/",name:"OPCO EP",peri:"reg"},
+  {url:"https://www.opcoep.fr/actualites",name:"OPCO EP",peri:"reg",type:"html-opcoep"},
   /* PÉDAGOGIE */
-  {url:"https://ainoa-asso.fr/feed/",name:"AINOA",peri:"ped"},
   {url:"https://portaileduc.net/website/feed/",name:"PortailEduc",peri:"ped"},
   {url:"https://sydologie.com/feed",name:"Sydologie",peri:"ped"},
   {url:"https://latelierduformateur.fr/feed/",name:"L'Atelier du Formateur",peri:"ped"},
@@ -108,7 +107,7 @@ const SOURCE_PRIORITY={
   reg:["OPCO EP","France Compétences","France Compétences RSS","Centre Inffo","Centre Inffo — Quotidien",
     "Centre Inffo — Réforme","Centre Inffo — Droit formation","Centre Inffo — Régions","Centre Inffo — Europe",
     "Centre Inffo — Innovation"],
-  ped:["AINOA","Sydologie","Podcast de la Formation","L'Atelier du Formateur"],
+  ped:["Sydologie","Podcast de la Formation","L'Atelier du Formateur"],
   ia:["OpenAI Blog"]
 };
 
@@ -243,6 +242,52 @@ async function fetchWithFallback(url){
   }
 }
 
+/* Source SNVEL : pas de flux RSS accessible (403 sur /feed/), mais le site tourne sous WordPress
+   avec son API REST activée. On interroge directement /wp-json/wp/v2/posts, qui renvoie du JSON
+   structuré (titre, lien, date, extrait) — plus stable qu'un scraping HTML classique. */
+async function fetchWpJsonPosts(url){
+  const res=await fetch(url,{headers:{'User-Agent':BROWSER_UA}});
+  if(!res.ok)throw new Error('Status code '+res.status);
+  const data=await res.json();
+  if(!Array.isArray(data))throw new Error('Réponse wp-json inattendue (API REST désactivée ?)');
+  return{items:data.map(p=>({
+    title:decodeEntities(stripHtml((p.title&&p.title.rendered)||'')),
+    link:p.link||'',
+    date:p.date?p.date.slice(0,10):'',
+    desc:stripHtml((p.excerpt&&p.excerpt.rendered)||'').slice(0,180)
+  }))};
+}
+
+/* Source OPCO EP : pas de flux RSS (/feed/ en 404), et pas d'API REST publique (site Drupal,
+   pas WordPress). On scrape la page HTML "Actualités", dont le balisage est propre et stable :
+   chaque teaser est un lien <a href=".../actualites/..."> contenant catégorie + durée de lecture
+   + titre + date (JJ/MM/AAAA) + résumé, dans cet ordre. Solution plus fragile qu'un flux RSS —
+   à surveiller si Opco EP refond son site (voir failedFeeds si le motif ne matche plus). */
+async function fetchOpcoEpHtml(url){
+  const res=await fetch(url,{headers:{'User-Agent':BROWSER_UA}});
+  if(!res.ok)throw new Error('Status code '+res.status);
+  const html=await res.text();
+  const items=[];
+  const linkRe=/<a\b[^>]*href="(https:\/\/www\.opcoep\.fr\/actualites\/[a-z0-9-]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+  let m;
+  const seen=new Set();
+  while((m=linkRe.exec(html))&&items.length<10){
+    const link=m[1];
+    if(seen.has(link))continue; // même article référencé plusieurs fois (image + titre)
+    const text=stripHtml(decodeEntities(m[2])).replace(/\s+/g,' ').trim();
+    const dateMatch=text.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if(!dateMatch)continue; // pas un vrai teaser d'article (lien de nav, image seule, etc.)
+    seen.add(link);
+    const date=`${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+    const beforeDate=text.slice(0,dateMatch.index).trim();
+    const afterDate=text.slice(dateMatch.index+dateMatch[0].length).trim();
+    // Le titre est la portion de texte juste avant la date, après l'étiquette "X min" si présente.
+    const title=beforeDate.replace(/^.*?\d+\s?min\s*/i,'').trim()||beforeDate;
+    items.push({title,link,date,desc:afterDate.slice(0,180)});
+  }
+  return{items};
+}
+
 const FEEDS_JSON_PATH=path.join(__dirname,'..','feeds.json');
 
 const RETENTION_DAYS={Haute:21,Moyenne:14,Basse:5};
@@ -298,13 +343,23 @@ async function run(){
 
   for(const feed of RSS_FEEDS){
     try{
-      const parsed=await fetchWithFallback(feed.url);
-      const items=(parsed.items||[]).slice(0,5).map(item=>{
-        const title=(item.title||'').trim();
-        const desc=stripHtml(item.contentSnippet||item.content||item.summary||'').slice(0,180);
-        const date=item.isoDate?item.isoDate.slice(0,10):(item.pubDate?new Date(item.pubDate).toISOString().slice(0,10):'');
-        const p=suggestPriority(title+' '+desc,feed.name,feed.peri);
-        return{title,link:(item.link||'').trim(),date,desc,source:feed.name,peri:feed.peri,sugUrg:p.urg,sugImpact:p.impact};
+      let rawItems;
+      if(feed.type==='wpjson'){
+        rawItems=(await fetchWpJsonPosts(feed.url)).items;
+      }else if(feed.type==='html-opcoep'){
+        rawItems=(await fetchOpcoEpHtml(feed.url)).items;
+      }else{
+        const parsed=await fetchWithFallback(feed.url);
+        rawItems=(parsed.items||[]).map(item=>({
+          title:(item.title||'').trim(),
+          link:(item.link||'').trim(),
+          desc:stripHtml(item.contentSnippet||item.content||item.summary||'').slice(0,180),
+          date:item.isoDate?item.isoDate.slice(0,10):(item.pubDate?new Date(item.pubDate).toISOString().slice(0,10):'')
+        }));
+      }
+      const items=rawItems.slice(0,5).map(it=>{
+        const p=suggestPriority(it.title+' '+it.desc,feed.name,feed.peri);
+        return{...it,source:feed.name,peri:feed.peri,sugUrg:p.urg,sugImpact:p.impact};
       }).filter(it=>!isOffTopic(it.title+' '+it.desc)&&!isSkippedLink(feed.name,it.link)&&!looksLikeTrainingOffer(it.desc)&&passesWhitelist(feed.name,it.title+' '+it.desc));
       freshItems.push(...items);
       console.log(`✔ ${feed.name} (${items.length} articles)`);
