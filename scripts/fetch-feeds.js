@@ -252,25 +252,23 @@ async function fetchSnvelListing(url){
   const html=await res.text();
   const items=[];
   const seen=new Set();
-  // Slugs connus du menu de navigation du site (pas des articles) : à exclure explicitement,
-  // car ils partagent la même structure HTML (lien + h2/h3) que les vrais articles et
-  // apparaissent AVANT eux dans le code source — un simple plafond de résultats les capturait
-  // en premier avant même d'atteindre les vrais articles de la page /actualites/.
-  const NAV_SLUGS=/\/(qui-sommes-nous|communiques-de-presse|conseil-expertise|collaboration-liberale|gestion-management|nous-contacter|contact|adherer|adhesion|mentions-legales|actualites)\/?$/i;
-  // Motif volontairement générique (lien qui enveloppe un titre en h2/h3) : accepte aussi bien
-  // un href relatif ("/mon-article/") qu'absolu, car on ne connaît pas le balisage exact du site
-  // (leçon tirée du bug similaire rencontré sur OPCO EP).
-  const blockRe=/<a\b[^>]*href="((?:https:\/\/www\.veterinaireliberal\.fr)?\/[a-z0-9-]{8,}\/?)"[^>]*>([\s\S]{0,400}?)<\/a>/gi;
+  // Le widget de tags/catégories ("Communication", "Gestion / management", "Qui sommes-nous"...)
+  // est répété sur TOUTES les pages du site (probablement une barre latérale), avec des URLs à
+  // UN seul segment (/gestion-management/). Les vrais articles, eux, ont toujours une URL à DEUX
+  // segments (/communication/nom-de-larticle/) — c'est ce critère structurel qu'on exploite ici,
+  // plus robuste qu'une liste de catégories à maintenir à la main.
+  const NON_NEWS_SECTIONS=/^(qui-sommes-nous|se-connecter|nous-contacter|contact|mentions-legales|adherer|adhesion)\//i;
+  const blockRe=/<a\b[^>]*href="((?:https:\/\/www\.veterinaireliberal\.fr)?\/[a-z0-9-]+\/[a-z0-9-]{6,}\/?)"[^>]*>([\s\S]{0,400}?)<\/a>/gi;
   let m,scanned=0;
-  while((m=blockRe.exec(html))&&items.length<5&&scanned<80){
+  while((m=blockRe.exec(html))&&items.length<5&&scanned<150){
     scanned++;
-    let link=m[1];
-    if(link.startsWith('/'))link='https://www.veterinaireliberal.fr'+link;
+    let raw=m[1];
+    const pathOnly=raw.replace(/^https:\/\/www\.veterinaireliberal\.fr/,'').replace(/^\//,'');
+    if(NON_NEWS_SECTIONS.test(pathOnly))continue; // sous-page d'une section non-actualité
+    let link=raw.startsWith('/')?'https://www.veterinaireliberal.fr'+raw:raw;
     if(seen.has(link))continue;
-    if(NAV_SLUGS.test(link))continue; // page de menu, pas un article
-    if(/\/(categorie|category|tag|page|auteur|author|wp-content|wp-json)(\/|$)/.test(link))continue; // pages techniques
     const inner=stripHtml(decodeEntities(m[2])).replace(/\s+/g,' ').trim();
-    if(inner.length<20)continue; // titre trop court pour être un vrai article (vs. libellé de menu)
+    if(inner.length<20)continue; // titre trop court pour être un vrai article
     seen.add(link);
     items.push({title:inner.slice(0,200),link,desc:''});
   }
