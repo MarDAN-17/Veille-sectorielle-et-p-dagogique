@@ -235,6 +235,17 @@ a{color:var(--info-text);text-decoration:none}a:hover{text-decoration:underline}
       <tbody id="exp-body"></tbody>
     </table>
   </div>
+
+  <div class="card" style="margin-top:1.5rem">
+    <div style="font-weight:500;font-size:14px;margin-bottom:6px"><i class="ti ti-device-floppy"></i> Sauvegarde complète (changement d'ordinateur)</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Vos articles sauvegardés et vos préférences d'affichage sont stockés uniquement dans ce navigateur. Exportez un fichier de sauvegarde avant de changer d'ordinateur, puis importez-le sur le nouveau poste pour tout retrouver à l'identique — rien n'est envoyé sur un serveur.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-primary" onclick="exportBackup()"><i class="ti ti-download"></i> Exporter la sauvegarde (JSON)</button>
+      <button class="btn" onclick="document.getElementById('backup-file-input').click()"><i class="ti ti-upload"></i> Importer une sauvegarde</button>
+      <input type="file" id="backup-file-input" accept="application/json,.json" style="display:none" onchange="importBackup(event)">
+    </div>
+    <div id="backup-msg" class="msg" style="margin-top:8px"></div>
+  </div>
 </div>
 </div>
 
@@ -677,6 +688,68 @@ function exportCSV(){
   const rows=articles.map(a=>[a.date,a.titre,a.source,a.url||'',a.peri,a.thema||'',a.impact||'',a.urg,a.stat].map(v=>`"${(v+'').replace(/"/g,'""')}"`).join(','));
   const blob=new Blob(['\uFEFF'+[h.join(','),...rows].join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='veille-apform-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+/* ══════ SAUVEGARDE COMPLÈTE (backup JSON, portable d'un ordinateur à l'autre) ══════
+   Contrairement à exportCSV() (destiné aux audits Qualiopi, lecture seule, non ré-importable
+   tel quel), ce format JSON conserve la totalité des données et champs, pour restauration
+   exacte des articles sauvegardés + des articles masqués ("Pas pertinent") sur un autre poste. */
+function exportBackup(){
+  const payload={exportedAt:new Date().toISOString(),version:1,articles:articles,hiddenLinks:getHiddenLinks()};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='apform-veille-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  const msg=document.getElementById('backup-msg');
+  msg.className='msg msg-ok';
+  msg.textContent=`Sauvegarde exportée : ${articles.length} article(s) + ${getHiddenLinks().length} lien(s) masqué(s).`;
+  setTimeout(()=>{msg.textContent='';},4000);
+}
+
+function importBackup(event){
+  const file=event.target.files&&event.target.files[0];
+  const msg=document.getElementById('backup-msg');
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    let data;
+    try{data=JSON.parse(reader.result);}catch(e){
+      msg.className='msg msg-err';msg.textContent="Fichier illisible : ce n'est pas un JSON valide.";
+      event.target.value='';return;
+    }
+    // Le fichier peut être soit un objet {articles, hiddenLinks} (format actuel),
+    // soit un simple tableau d'articles (ancien format / compatibilité).
+    const incomingArticles=Array.isArray(data)?data:(Array.isArray(data.articles)?data.articles:null);
+    const incomingHidden=Array.isArray(data)?[]:(Array.isArray(data.hiddenLinks)?data.hiddenLinks:[]);
+    if(!incomingArticles){
+      msg.className='msg msg-err';msg.textContent="Fichier invalide : aucun article trouvé dedans.";
+      event.target.value='';return;
+    }
+    if(!confirm(`Importer ${incomingArticles.length} article(s) ? Ils seront fusionnés avec ceux déjà présents (les doublons — même URL ou même titre+date — seront ignorés).`)){
+      event.target.value='';return;
+    }
+    // Fusion par déduplication : on n'écrase jamais l'existant, on ajoute seulement le nouveau.
+    const existingKeys=new Set(articles.map(a=>(a.url||'')+'|'+(a.titre||'')+'|'+(a.date||'')));
+    let added=0;
+    incomingArticles.forEach(a=>{
+      const key=(a.url||'')+'|'+(a.titre||'')+'|'+(a.date||'');
+      if(existingKeys.has(key))return;
+      existingKeys.add(key);
+      articles.push(a);
+      added++;
+    });
+    save();
+    const hidden=getHiddenLinks();
+    let addedHidden=0;
+    incomingHidden.forEach(l=>{if(!hidden.includes(l)){hidden.push(l);addedHidden++;}});
+    if(addedHidden)localStorage.setItem(HIDDEN_LINKS_KEY,JSON.stringify(hidden));
+    renderDash();renderFil();renderExport();
+    msg.className='msg msg-ok';
+    msg.textContent=`Import terminé : ${added} article(s) ajouté(s) (${incomingArticles.length-added} doublon(s) ignoré(s))${addedHidden?`, ${addedHidden} lien(s) masqué(s) restauré(s)`:''}.`;
+    event.target.value='';
+  };
+  reader.readAsText(file);
 }
 
 /* ══════ INIT ══════ */
