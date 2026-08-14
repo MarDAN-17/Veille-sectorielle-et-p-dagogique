@@ -16,7 +16,6 @@ const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
 /* ══════ LISTE DES FLUX (identique à l'ancien RSS_FEEDS d'index.html) ══════ */
 const RSS_FEEDS = [
   /* VÉTÉRINAIRE */
-  {url:"https://apform.fr/feed/",name:"APFORM",peri:"vet"},
   {url:"https://devenir-asv.com/feed/",name:"Devenir ASV",peri:"vet"},
   {url:"https://www.veterinaire.fr/rss.xml",name:"Ordre des Vétérinaires",peri:"vet"},
   {url:"https://soutienveterinaire.fr/feed/",name:"Soutien Vétérinaire",peri:"vet"},
@@ -28,7 +27,7 @@ const RSS_FEEDS = [
   {url:"https://agriculture.gouv.fr/rss_presse.xml",name:"Min. Agriculture Presse",peri:"vet"},
   {url:"https://agriculture.gouv.fr/rss_publications.xml",name:"Min. Agriculture Publications",peri:"vet"},
   {url:"https://www.cnr-bea.fr/feed/",name:"CNR Bien-être animal",peri:"vet"},
-  {url:"https://www.veterinaireliberal.fr/wp-json/wp/v2/posts?per_page=5",name:"SNVEL",peri:"vet",type:"wpjson"},
+  {url:"https://www.veterinaireliberal.fr/actualites/",name:"SNVEL",peri:"vet",type:"html-snvel"},
   {url:"https://legifrss.org/latest?q=v%C3%A9t%C3%A9rinaire",name:"Légifrance — Vétérinaire",peri:"vet"},
   {url:"https://legifrss.org/latest?q=sant%C3%A9%20animale",name:"Légifrance — Santé animale",peri:"vet"},
   {url:"https://legifrss.org/latest?q=m%C3%A9decine%20v%C3%A9t%C3%A9rinaire",name:"Légifrance — Médecine vétérinaire",peri:"vet"},
@@ -103,7 +102,7 @@ const PRIORITY_LOW=["canicule","sécheresse","engrais","haie","pfas","eau potabl
 
 /* Sources dont la seule provenance justifie un bonus de priorité, propre à chaque périmètre */
 const SOURCE_PRIORITY={
-  vet:["SNVEL","APFORM","Ordre des Vétérinaires"],
+  vet:["SNVEL","Ordre des Vétérinaires"],
   reg:["OPCO EP","France Compétences","France Compétences RSS","Centre Inffo","Centre Inffo — Quotidien",
     "Centre Inffo — Réforme","Centre Inffo — Droit formation","Centre Inffo — Régions","Centre Inffo — Europe",
     "Centre Inffo — Innovation"],
@@ -242,20 +241,52 @@ async function fetchWithFallback(url){
   }
 }
 
-/* Source SNVEL : pas de flux RSS accessible (403 sur /feed/), mais le site tourne sous WordPress
-   avec son API REST activée. On interroge directement /wp-json/wp/v2/posts, qui renvoie du JSON
-   structuré (titre, lien, date, extrait) — plus stable qu'un scraping HTML classique. */
-async function fetchWpJsonPosts(url){
+/* Source SNVEL : /feed/ (403) et /wp-json (401) sont tous deux verrouillés délibérément par le
+   site (durcissement sécurité). Repli sur scraping en 2 temps : d'abord la page "Actualités" pour
+   titre + lien de chaque article (elle n'affiche aucune date fiable), puis, pour chaque article
+   retenu, une requête sur sa page individuelle pour y extraire la vraie date de publication
+   (balise standard Yoast SEO "article:published_time", avec repli sur <time datetime>). */
+async function fetchSnvelListing(url){
   const res=await fetch(url,{headers:{'User-Agent':BROWSER_UA}});
   if(!res.ok)throw new Error('Status code '+res.status);
-  const data=await res.json();
-  if(!Array.isArray(data))throw new Error('Réponse wp-json inattendue (API REST désactivée ?)');
-  return{items:data.map(p=>({
-    title:decodeEntities(stripHtml((p.title&&p.title.rendered)||'')),
-    link:p.link||'',
-    date:p.date?p.date.slice(0,10):'',
-    desc:stripHtml((p.excerpt&&p.excerpt.rendered)||'').slice(0,180)
-  }))};
+  const html=await res.text();
+  const items=[];
+  const seen=new Set();
+  // Motif volontairement générique (lien qui enveloppe un titre en h2/h3) : accepte aussi bien
+  // un href relatif ("/mon-article/") qu'absolu, car on ne connaît pas le balisage exact du site
+  // (leçon tirée du bug similaire rencontré sur OPCO EP).
+  const blockRe=/<a\b[^>]*href="((?:https:\/\/www\.veterinaireliberal\.fr)?\/[a-z0-9-]{8,}\/?)"[^>]*>([\s\S]{0,400}?)<\/a>/gi;
+  let m;
+  while((m=blockRe.exec(html))&&items.length<8){
+    let link=m[1];
+    if(link.startsWith('/'))link='https://www.veterinaireliberal.fr'+link;
+    if(seen.has(link))continue;
+    if(/\/(actualites|categorie|category|tag|page|auteur|author|wp-content|wp-json)(\/|$)/.test(link))continue; // pages de nav/techniques, pas des articles
+    const inner=stripHtml(decodeEntities(m[2])).replace(/\s+/g,' ').trim();
+    if(inner.length<15)continue; // trop court pour être un vrai titre d'article
+    seen.add(link);
+    items.push({title:inner.slice(0,200),link,desc:''});
+  }
+  return{items};
+}
+async function fetchSnvelArticleDate(link){
+  try{
+    const res=await fetch(link,{headers:{'User-Agent':BROWSER_UA}});
+    if(!res.ok)return '';
+    const html=await res.text();
+    let m=html.match(/property="article:published_time"\s+content="([^"]+)"/i);
+    if(!m)m=html.match(/<time\b[^>]*datetime="([^"]+)"/i);
+    return m?m[1].slice(0,10):'';
+  }catch(e){return '';}
+}
+async function fetchSnvelHtml(url){
+  const listing=await fetchSnvelListing(url);
+  const items=[];
+  for(const it of listing.items.slice(0,5)){
+    const date=await fetchSnvelArticleDate(it.link);
+    items.push({...it,date});
+  }
+  return{items};
 }
 
 /* Source OPCO EP : pas de flux RSS (/feed/ en 404), et pas d'API REST publique (site Drupal,
@@ -268,11 +299,11 @@ async function fetchOpcoEpHtml(url){
   if(!res.ok)throw new Error('Status code '+res.status);
   const html=await res.text();
   const items=[];
-  const linkRe=/<a\b[^>]*href="(https:\/\/www\.opcoep\.fr\/actualites\/[a-z0-9-]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+  const linkRe=/<a\b[^>]*href="(\/actualites\/[a-z0-9-]+|https:\/\/www\.opcoep\.fr\/actualites\/[a-z0-9-]+)"[^>]*>([\s\S]*?)<\/a>/gi;
   let m;
   const seen=new Set();
   while((m=linkRe.exec(html))&&items.length<10){
-    const link=m[1];
+    const link=m[1].startsWith('/')?'https://www.opcoep.fr'+m[1]:m[1];
     if(seen.has(link))continue; // même article référencé plusieurs fois (image + titre)
     const text=stripHtml(decodeEntities(m[2])).replace(/\s+/g,' ').trim();
     const dateMatch=text.match(/(\d{2})\/(\d{2})\/(\d{4})/);
@@ -344,8 +375,8 @@ async function run(){
   for(const feed of RSS_FEEDS){
     try{
       let rawItems;
-      if(feed.type==='wpjson'){
-        rawItems=(await fetchWpJsonPosts(feed.url)).items;
+      if(feed.type==='html-snvel'){
+        rawItems=(await fetchSnvelHtml(feed.url)).items;
       }else if(feed.type==='html-opcoep'){
         rawItems=(await fetchOpcoEpHtml(feed.url)).items;
       }else{
