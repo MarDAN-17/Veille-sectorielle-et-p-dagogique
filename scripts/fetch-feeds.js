@@ -28,11 +28,7 @@ const RSS_FEEDS = [
   {url:"https://agriculture.gouv.fr/rss_presse.xml",name:"Min. Agriculture Presse",peri:"vet"},
   {url:"https://agriculture.gouv.fr/rss_publications.xml",name:"Min. Agriculture Publications",peri:"vet"},
   {url:"https://www.cnr-bea.fr/feed/",name:"CNR Bien-être animal",peri:"vet"},
-  {url:"https://politepaul.com/fd/sL854Xcwyz27.xml",name:"Le Point Vétérinaire — ASV",peri:"vet"},
-  {url:"https://politepaul.com/fd/GpPwctzDNXOC.xml",name:"Le Point Vétérinaire — Actualités",peri:"vet"},
-  {url:"https://politepaul.com/fd/aJmDf0JHivkJ.xml",name:"Le Point Vétérinaire — Pratique",peri:"vet"},
   {url:"https://www.veterinaireliberal.fr/feed/",name:"SNVEL",peri:"vet"},
-  {url:"https://www.depecheveterinaire.com/feed/",name:"La Dépêche Vétérinaire",peri:"vet"},
   {url:"https://legifrss.org/latest?q=v%C3%A9t%C3%A9rinaire",name:"Légifrance — Vétérinaire",peri:"vet"},
   {url:"https://legifrss.org/latest?q=sant%C3%A9%20animale",name:"Légifrance — Santé animale",peri:"vet"},
   {url:"https://legifrss.org/latest?q=m%C3%A9decine%20v%C3%A9t%C3%A9rinaire",name:"Légifrance — Médecine vétérinaire",peri:"vet"},
@@ -69,8 +65,7 @@ const RSS_FEEDS = [
   {url:"https://lepodcastdelaformation.fr/feed/",name:"Podcast de la Formation",peri:"ped"},
   {url:"https://feeds.podcastics.com/podcastics/podcasts/rss/6628_a9c72191f50b205a6ebe0276fb677e8f.rss",name:"Véto Actu (Podcast)",peri:"vet"},
   {url:"https://blogs.articulate.com/les-essentiels-du-elearning/feed/",name:"Blog Articulate",peri:"ped"},
-  {url:"https://www.myvirtualclassroom.com/feed/",name:"Blog MyVirtualClassroom",peri:"ped"},
-  {url:"https://www.rdventerredigitale.com/feed/",name:"RDV en terre digitale",peri:"ped"},
+  {url:"https://feed.ausha.co/o9DGRcY6dPkl",name:"RDV en terre digitale",peri:"ped"},
   {url:"https://www.digiformag.com/feed/",name:"Digiformag",peri:"ped"},
   {url:"https://legifrss.org/latest?q=accessibilit%C3%A9%20num%C3%A9rique",name:"Légifrance — Accessibilité numérique",peri:"ped"},
   /* INTELLIGENCE ARTIFICIELLE */
@@ -78,8 +73,6 @@ const RSS_FEEDS = [
   {url:"https://blog.google/rss",name:"Google Blog",peri:"ia"},
   {url:"https://openai.com/news/rss.xml",name:"OpenAI Blog",peri:"ia"},
   {url:"https://towardsdatascience.com/feed/",name:"Towards Data Science",peri:"ia"},
-  {url:"https://theophileburnet.substack.com/feed",name:"Théophile Burnet",peri:"ia"},
-  {url:"https://optimia.substack.com/feed",name:"OptimIA",peri:"ia"},
   {url:"https://www.upmynt.com/rss/",name:"Upmynt",peri:"ia"},
   {url:"https://intelligence-artificielle.com/feed/",name:"Intelligence-Artificielle.com",peri:"ia"},
   {url:"https://www.blogdumoderateur.com/feed/",name:"Blog du Modérateur",peri:"ia"},
@@ -156,7 +149,14 @@ const VET_TERMS=["vétérinaire","vétérinaires","animal","animaux","animale","
 
 const FORMATION_TERMS=["formation professionnelle","organisme de formation","apprenant","apprenants","qualiopi",
   "certification","référentiel","action de formation","actions de formation","stagiaire","prestataire de formation",
-  "apprentissage","alternance","centre de formation","formation continue","formation à distance","foad"];
+  "apprentissage","alternance","centre de formation","formation continue","formation à distance","foad",
+  // Vocabulaire juridique réel employé par les textes de loi (Légifrance), distinct du vocabulaire
+  // commercial/usuel : un décret Qualiopi ne contient quasiment jamais le mot "Qualiopi" lui-même.
+  "référentiel national qualité","actions concourant au développement des compétences",
+  "prestataires d'actions concourant au développement des compétences","organismes certificateurs",
+  "organisme certificateur","formation ouverte ou à distance","formations ouvertes ou à distance",
+  "rgaa","référentiel général d'amélioration de l'accessibilité","accessibilité aux personnes handicapées",
+  "services de communication au public en ligne","protection des données","données personnelles","rgpd"];
 
 const IA_TERMS=["intelligence artificielle","ia générative","chatgpt","machine learning","modèle de langage",
   "llm","openai","deepmind","algorithme d'ia","système d'ia","systèmes d'ia","ia à haut risque","règlement ia"];
@@ -268,9 +268,13 @@ function mergeWithRetention(existingItems,freshItems){
   const byKey=new Map();
   const keyOf=(it)=>it.link+'|'+it.peri; // même article, périmètres différents = entrées distinctes (ex: eLearning Industry en double)
   // On garde les articles déjà connus, en fixant leur date de première apparition si elle manque encore.
+  // La priorité est recalculée à chaque passage (pas seulement figée au moment de la première collecte) :
+  // un changement de mots-clés/pondération doit s'appliquer rétroactivement aux articles déjà en mémoire,
+  // sinon un article mal classé peut rester avec son ancien score jusqu'à expiration de sa rétention.
   for(const it of existingItems){
     if(!it.link)continue;
-    byKey.set(keyOf(it),{...it,firstSeen:it.firstSeen||now});
+    const p=suggestPriority((it.title||'')+' '+(it.desc||''),it.source,it.peri);
+    byKey.set(keyOf(it),{...it,sugUrg:p.urg,sugImpact:p.impact,firstSeen:it.firstSeen||now});
   }
   // On superpose les articles récupérés aujourd'hui : priorité recalculée à jour,
   // mais on conserve la date de première apparition d'origine pour ne pas relancer son compteur de rétention.
