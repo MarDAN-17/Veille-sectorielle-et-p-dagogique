@@ -76,6 +76,7 @@ const RSS_FEEDS = [
   {url:"https://www.blogdumoderateur.com/feed/",name:"Blog du Modérateur",peri:"ia"},
   {url:"https://techcrunch.com/category/artificial-intelligence/feed/",name:"TechCrunch — IA",peri:"ia"},
   {url:"https://legifrss.org/latest?q=intelligence%20artificielle",name:"Légifrance — IA",peri:"ia"},
+  {url:"https://www.youtube.com/feeds/videos.xml?channel_id=UCLKx4-_XO5sR0AO0j8ye7zQ",name:"Shubham Sharma (YouTube)",peri:"ia"},
   /* RÉGLEMENTATION / QUALIOPI — compléments Légifrance */
   {url:"https://legifrss.org/latest?q=qualiopi",name:"Légifrance — Qualiopi",peri:"reg"},
   {url:"https://legifrss.org/latest?q=tra%C3%A7abilit%C3%A9%20des%20actions%20de%20formation",name:"Légifrance — Traçabilité formation",peri:"reg"},
