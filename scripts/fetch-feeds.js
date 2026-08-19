@@ -66,6 +66,7 @@ const RSS_FEEDS = [
   {url:"https://feed.ausha.co/o9DGRcY6dPkl",name:"RDV en terre digitale",peri:"ped"},
   {url:"https://www.digiformag.com/feed/",name:"Digiformag",peri:"ped"},
   {url:"https://legifrss.org/latest?q=accessibilit%C3%A9%20num%C3%A9rique",name:"Légifrance — Accessibilité numérique",peri:"ped"},
+  {url:"https://www.blog-formation-entreprise.fr/feed/",name:"C-Campus — Blog Formation Entreprise",peri:"ped"},
   /* INTELLIGENCE ARTIFICIELLE */
   {url:"https://feeds.feedburner.com/elearningindustry",name:"eLearning Industry",peri:"ia"}, // doublon volontaire : article pertinent pour les deux périmètres
   {url:"https://blog.google/rss",name:"Google Blog",peri:"ia"},
